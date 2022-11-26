@@ -45,14 +45,14 @@ public: //TODO ASK does it stay public and the upper code protected?
         return *this;
     }
 
-    Piece(Piece && rha)
+    Piece(Piece &&rha)
     {
         x = rha.get_x();
         y = rha.get_y();
 
     }
 
-    Piece &operator=(Piece && rha)
+    Piece &operator=(Piece &&rha)
     {
         x = rha.get_x();
         y = rha.get_y();
@@ -61,7 +61,6 @@ public: //TODO ASK does it stay public and the upper code protected?
     }
 
 };
-
 
 
 class King final : Piece
@@ -85,7 +84,7 @@ public:
 class Queen final : Piece
 {
 public:
-    Queen(int x, int y, bool color): Piece(x, y, color) {};
+    Queen(int x, int y, bool color) : Piece(x, y, color) {};
 };
 
 class Rook final : Piece
@@ -93,24 +92,24 @@ class Rook final : Piece
 private:
     bool moved;
 public:
-    Rook(int x, int y, bool color): Piece(x, y, color)
+    Rook(int x, int y, bool color) : Piece(x, y, color)
     {
         moved = false;
     };
 
-    [[nodiscard]] bool has_moved() const {return moved;}
+    [[nodiscard]] bool has_moved() const { return moved; }
 };
 
 class Bishop final : Piece
 {
 public:
-    Bishop(int x, int y, bool color): Piece(x, y, color) {};
+    Bishop(int x, int y, bool color) : Piece(x, y, color) {};
 };
 
 class Knight final : Piece
 {
 public:
-    Knight(int x, int y, bool color): Piece(x, y, color) {};
+    Knight(int x, int y, bool color) : Piece(x, y, color) {};
 };
 
 class Pawn final : Piece
@@ -134,7 +133,8 @@ private:
     bool empty;
     Piece piece;
 public:
-    Cell(): x(1), y(1), vertical('a') {};
+    Cell() : x(1), y(1), vertical('a') {};
+
     Cell(int x, int y) : x(x), y(y), vertical("nabcdefgh"[x]), empty(true) {};
 
     Cell(int x, int y, char name, bool color) :
@@ -155,7 +155,7 @@ public:
         vertical = src.get_vertical();
     }
 
-    Cell(Cell && src)
+    Cell(Cell &&src)
     {
         x = src.get_x();
         y = src.get_y();
@@ -174,7 +174,7 @@ public:
         std::swap(this->piece, tmp.piece);
     }
 
-    Cell &operator=(Cell && src) noexcept
+    Cell &operator=(Cell &&src) noexcept
     {
         if (this == &src) return *this;
 
@@ -191,6 +191,8 @@ public:
     [[nodiscard]] int get_y() const { return y; }
 
     [[nodiscard]] char get_vertical() const { return vertical; }
+
+    [[nodiscard]] Piece get_piece() { return piece; }
 
     [[nodiscard]] bool is_empty() const { return empty; }
 
@@ -216,9 +218,39 @@ public:
     //TODO edit constructor when finish with different pieces
     Position()
     {
-        for (int i = 0; i<8;i++)
-            for(int j =0; j<8;j++)
-                board[i][j] = Cell(i+1, j+1);
+        int curr = 0;
+        for (int i = 0; i < 8; i++)
+            for (int j = 0; j < 8; j++)
+            {
+                if (i == 1)
+                    board[i][j] =
+                            Cell(j + 1, i + 1, 'p', true);
+                else if (i == 6)
+                    board[i][j] =
+                            Cell(j + 1, i + 1, 'p', false);
+                else if (j == 0 or j == 7)
+                    board[i][j] =
+                            Cell(j + 1, i + 1, 'R', i == 0 ? true : false);
+                else if (j == 1 or j == 6)
+                    board[i][j] =
+                            Cell(j + 1, i + 1, 'N', i == 0 ? true : false);
+                else if (j == 2 or j == 5)
+                    board[i][j] =
+                            Cell(j + 1, i + 1, 'B', i == 0 ? true : false);
+                else if (j == 3)
+                    board[i][j] =
+                            Cell(j + 1, i + 1, 'Q', i == 0 ? true : false);
+                else if (j == 4)
+                    board[i][j] =
+                            Cell(j + 1, i + 1, 'K', i == 0 ? true : false);
+                else
+                {
+                    board[i][j] =
+                            Cell(j + 1, i + 1);
+                    continue;
+                }
+                //pieces[curr] = &board[i][j].get_piece(); TODO
+            }
     }
 
     //TODO upgrade methods of the "the rule of 5"
