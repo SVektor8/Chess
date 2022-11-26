@@ -11,10 +11,10 @@ protected:
     bool alive;
     bool color; //true = white, false = black
 
-public:
+public: //TODO ASK does it stay public and the upper code protected?
     Piece() : alive(true) {};
 
-    Piece(int x, int y) : x(x), y(y), alive(true) {};
+    Piece(int x, int y, bool color) : x(x), y(y), alive(true), color(color) {};
 
     [[nodiscard]] int get_x() const { return x; }
 
@@ -26,11 +26,16 @@ public:
         y = n_y;
     }
 
-    //TODO upgrade methods of the "the rule of 5"
+    //TODO rewrite methods of the "the rule of 5"
 
     ~Piece() = default;
 
-    Piece(Piece const &) = delete;
+    Piece(Piece const &rha)
+    {
+        x = rha.get_x();
+        y = rha.get_y();
+
+    }
 
     Piece &operator=(Piece &rha)
     {
@@ -40,13 +45,88 @@ public:
         return *this;
     }
 
-    Piece(Piece &&other) = delete;
+    Piece(Piece && rha)
+    {
+        x = rha.get_x();
+        y = rha.get_y();
 
-    Piece &operator=(Piece &&other) = delete;
+    }
+
+    Piece &operator=(Piece && rha)
+    {
+        x = rha.get_x();
+        y = rha.get_y();
+
+        return *this;
+    }
 
 };
 
-class Cell
+
+
+class King final : Piece
+{
+private:
+    bool moved;
+    bool checked;
+
+public:
+    King(int x, int y, bool color) : Piece(x, y, color)
+    {
+        moved = false;
+        checked = false;
+    };
+
+    [[nodiscard]] bool has_moved() const { return moved; }
+
+    [[nodiscard]] bool was_checked() const { return checked; }
+};
+
+class Queen final : Piece
+{
+public:
+    Queen(int x, int y, bool color): Piece(x, y, color) {};
+};
+
+class Rook final : Piece
+{
+private:
+    bool moved;
+public:
+    Rook(int x, int y, bool color): Piece(x, y, color)
+    {
+        moved = false;
+    };
+
+    [[nodiscard]] bool has_moved() const {return moved;}
+};
+
+class Bishop final : Piece
+{
+public:
+    Bishop(int x, int y, bool color): Piece(x, y, color) {};
+};
+
+class Knight final : Piece
+{
+public:
+    Knight(int x, int y, bool color): Piece(x, y, color) {};
+};
+
+class Pawn final : Piece
+{
+private:
+    bool moved;
+public:
+    Pawn(int x, int y, bool color) : Piece(x, y, color) //TODO ASK why cannot write x(X)
+    {
+        moved = false;
+    };
+
+    [[nodiscard]] bool has_moved() const { return moved; }
+};
+
+class Cell final
 {
 private:
     int x, y;
@@ -54,20 +134,63 @@ private:
     bool empty;
     Piece piece;
 public:
+    Cell(): x(1), y(1), vertical('a') {};
     Cell(int x, int y) : x(x), y(y), vertical("nabcdefgh"[x]), empty(true) {};
 
-    Cell(int x, int y, std::string name, bool color) :
+    Cell(int x, int y, char name, bool color) :
             x(x), y(y), vertical("nabcdefgh"[x]), empty(false)
     {
         //TODO finish constructor after adding child classes
         Piece piece();
     };
 
-    [[nodiscard]] int get_x() const { return x; }
+    //TODO write destructor
+
+    ~Cell() = default;
+
+    Cell(Cell const &src)
+    {
+        x = src.get_x();
+        y = src.get_y();
+        vertical = src.get_vertical();
+    }
+
+    Cell(Cell && src)
+    {
+        x = src.get_x();
+        y = src.get_y();
+        vertical = src.get_vertical();
+    }
+
+    Cell &operator=(Cell &src)
+    {
+        if (this == &src) return *this;
+
+        Cell tmp(src);
+        std::swap(this->x, tmp.x);
+        std::swap(this->y, tmp.y);
+        std::swap(this->vertical, tmp.vertical);
+        std::swap(this->empty, tmp.empty);
+        std::swap(this->piece, tmp.piece);
+    }
+
+    Cell &operator=(Cell && src) noexcept
+    {
+        if (this == &src) return *this;
+
+        Cell tmp(std::move(src));
+        std::swap(this->x, tmp.x);
+        std::swap(this->y, tmp.y);
+        std::swap(this->vertical, tmp.vertical);
+        std::swap(this->empty, tmp.empty);
+        std::swap(this->piece, tmp.piece);
+    }
+
+    [[nodiscard]] int get_x() const { return x; } //TODO ASK nodiscard
 
     [[nodiscard]] int get_y() const { return y; }
 
-    [[nodiscard]] char get_vert() const { return vertical; }
+    [[nodiscard]] char get_vertical() const { return vertical; }
 
     [[nodiscard]] bool is_empty() const { return empty; }
 
@@ -84,17 +207,35 @@ public:
     }
 };
 
-class Position
+class Position final
 {
 private:
     Cell board[8][8];
     Piece pieces[32];
 public:
+    //TODO edit constructor when finish with different pieces
     Position()
+    {
+        for (int i = 0; i<8;i++)
+            for(int j =0; j<8;j++)
+                board[i][j] = Cell(i+1, j+1);
+    }
+
+    //TODO upgrade methods of the "the rule of 5"
+
+    ~Position() = default;
+
+    Position(Position const &) = delete;
+
+    Position &operator=(Piece &) = delete;
+
+    Position(Position &&) = delete;
+
+    Position &operator=(Position &&) = delete;
 };
 
 int main()
 {
-    std::cout << "Hello, World!" << std::endl;
+    std::cout << "Hello, Chess World!" << std::endl;
     return 0;
 }
