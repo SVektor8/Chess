@@ -4,18 +4,24 @@
 #include <string>
 #include <vector>
 
-class Piece {
+class Piece
+{
 protected:
     int x, y;
+    bool alive;
+    bool color; //true = white, false = black
 
 public:
-    Piece() {};
+    Piece() : alive(true) {};
+
+    Piece(int x, int y) : x(x), y(y), alive(true) {};
 
     [[nodiscard]] int get_x() const { return x; }
 
     [[nodiscard]] int get_y() const { return y; }
 
-    void move(int n_x, int n_y) {
+    void move(int n_x, int n_y)
+    {
         x = n_x;
         y = n_y;
     }
@@ -26,7 +32,8 @@ public:
 
     Piece(Piece const &) = delete;
 
-    Piece &operator=(Piece &rha) {
+    Piece &operator=(Piece &rha)
+    {
         x = rha.get_x();
         y = rha.get_y();
 
@@ -39,7 +46,8 @@ public:
 
 };
 
-class Cell {
+class Cell
+{
 private:
     int x, y;
     char vertical;
@@ -47,6 +55,13 @@ private:
     Piece piece;
 public:
     Cell(int x, int y) : x(x), y(y), vertical("nabcdefgh"[x]), empty(true) {};
+
+    Cell(int x, int y, std::string name, bool color) :
+            x(x), y(y), vertical("nabcdefgh"[x]), empty(false)
+    {
+        //TODO finish constructor after adding child classes
+        Piece piece();
+    };
 
     [[nodiscard]] int get_x() const { return x; }
 
@@ -56,14 +71,30 @@ public:
 
     [[nodiscard]] bool is_empty() const { return empty; }
 
-    void employed(Piece p) {
+    void employ(Piece &p)
+    {
         piece = p;
         empty = false;
+        piece.move(x, y);
+    }
+
+    void unemploy()
+    {
+        empty = true;
     }
 };
 
+class Position
+{
+private:
+    Cell board[8][8];
+    Piece pieces[32];
+public:
+    Position()
+};
 
-int main() {
+int main()
+{
     std::cout << "Hello, World!" << std::endl;
     return 0;
 }
