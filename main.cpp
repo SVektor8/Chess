@@ -249,7 +249,6 @@ public:
                 if (mode == "default")
                 {
                     board[i][j].employ(pieces[pieces.size() - 1]);
-                    //std :: cout << "j" << std::endl;
                 }
             }
     }
@@ -289,7 +288,7 @@ int main()
                 std::cout << cell.get_piece().get_type();
         }
 
-        std::cout<< std::endl;
+        std::cout << std::endl;
     }
 
     return 0;
