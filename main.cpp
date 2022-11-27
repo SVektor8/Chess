@@ -144,11 +144,12 @@ private:
     int x, y;
     char vertical;
     bool empty;
+    bool color;
     Piece piece;
 public:
-    Cell() : x(1), y(1), vertical('a'), empty(true) {};
+    Cell() : x(1), y(1), vertical('a'), empty(true), color(false) {};
 
-    Cell(int x, int y) : x(x), y(y), vertical("nabcdefgh"[x]), empty(true) {};
+    Cell(int x, int y) : x(x), y(y), vertical("nabcdefgh"[x]), empty(true), color((x + y) % 2) {};
 
     //TODO write destructor
     ~Cell() = default;
@@ -160,6 +161,7 @@ public:
         vertical = src.get_vertical();
         empty = src.is_empty();
         piece = src.get_piece();
+        color = src.get_color();
     }
 
     Cell(Cell &&src)
@@ -169,6 +171,7 @@ public:
         vertical = src.get_vertical();
         empty = src.is_empty();
         piece = src.get_piece();
+        color = src.get_color();
     }
 
     Cell &operator=(Cell &src)
@@ -181,6 +184,7 @@ public:
         std::swap(this->vertical, tmp.vertical);
         std::swap(this->empty, tmp.empty);
         std::swap(this->piece, tmp.piece);
+        std::swap(this->color, tmp.color);
     }
 
     Cell &operator=(Cell &&src) noexcept
@@ -193,11 +197,14 @@ public:
         std::swap(this->vertical, tmp.vertical);
         std::swap(this->empty, tmp.empty);
         std::swap(this->piece, tmp.piece);
+        std::swap(this->color, tmp.color);
     }
 
     [[nodiscard]] int get_x() const { return x; } //TODO ASK nodiscard
 
     [[nodiscard]] int get_y() const { return y; }
+
+    [[nodiscard]] int get_color() const { return color; }
 
     [[nodiscard]] char get_vertical() const { return vertical; }
 
@@ -330,5 +337,15 @@ int main()
         std::cout << std::endl;
     }
 
+    for (int y = 8; y > 0; y--)
+    {
+        for (int x = 1; x < 9; x++)
+        {
+            Cell cell(posi.get_cell(x, y));
+            std::cout << cell.get_color();
+        }
+
+        std::cout << std::endl;
+    }
     return 0;
 }
