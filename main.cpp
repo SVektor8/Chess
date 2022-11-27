@@ -143,7 +143,7 @@ class Cell final
 private:
     int x, y;
     char vertical;
-    bool empty;
+    bool empty, black_attacked = false, white_attacked = false;
     bool color;
     Piece piece;
 public:
@@ -162,16 +162,14 @@ public:
         empty = src.is_empty();
         piece = src.get_piece();
         color = src.get_color();
+        white_attacked = src.is_attacked_by_white();
+        black_attacked = src.is_attacked_by_black();
     }
 
     Cell(Cell &&src)
     {
-        x = src.get_x();
-        y = src.get_y();
-        vertical = src.get_vertical();
-        empty = src.is_empty();
-        piece = src.get_piece();
-        color = src.get_color();
+        Cell tmp(src);
+        *this = tmp;
     }
 
     Cell &operator=(Cell &src)
@@ -185,6 +183,8 @@ public:
         std::swap(this->empty, tmp.empty);
         std::swap(this->piece, tmp.piece);
         std::swap(this->color, tmp.color);
+        std::swap(this->white_attacked, tmp.white_attacked);
+        std::swap(this->black_attacked, tmp.black_attacked);
     }
 
     Cell &operator=(Cell &&src) noexcept
@@ -192,12 +192,7 @@ public:
         if (this == &src) return *this;
 
         Cell tmp(std::move(src));
-        std::swap(this->x, tmp.x);
-        std::swap(this->y, tmp.y);
-        std::swap(this->vertical, tmp.vertical);
-        std::swap(this->empty, tmp.empty);
-        std::swap(this->piece, tmp.piece);
-        std::swap(this->color, tmp.color);
+        *this = tmp;
     }
 
     [[nodiscard]] int get_x() const { return x; } //TODO ASK nodiscard
@@ -212,6 +207,14 @@ public:
 
     [[nodiscard]] bool is_empty() const { return empty; }
 
+    [[nodiscard]] bool is_attacked_by_white() const { return white_attacked; }
+
+    [[nodiscard]] bool is_attacked_by_black() const { return black_attacked; }
+
+    void set_white_attack() { white_attacked = true; }
+
+    void set_black_attack() { black_attacked = true; }
+
     void employ(Piece &p)
     {
         piece = p;
@@ -222,6 +225,12 @@ public:
     void unemploy()
     {
         empty = true;
+    }
+
+    void recheck_attack()
+    {
+        white_attacked = false;
+        black_attacked = false;
     }
 };
 
@@ -314,7 +323,52 @@ public:
     {
         return pieces[i];
     }
+
+
+    void check_attack(Piece const &piece, Cell &cell)
+    {
+        int c_x = cell.get_x(), c_y = cell.get_y();
+        int p_x = piece.get_x(), p_y = piece.get_y();
+        bool color = piece.get_color();
+
+        if (not(c_x == p_x and (c_y == p_y)))
+        {
+            if (piece.get_type() == 'p')
+            {
+                if (color)
+                {
+                    if (c_y - p_y == 1 and abs(c_x - p_x) == 1) // white pawn
+                        cell.set_white_attack();
+                }
+                else
+                {
+                    if (c_y - p_y == -1 and abs(c_x - p_x) == 1) // black pawn
+                        cell.set_black_attack();
+                }
+            }
+            else if (piece.get_type() == 'K') // King
+            {
+                if (abs(c_y - p_y) <= 1 and abs(c_x - p_x) <= 1)
+                {
+                    if (color)
+                        cell.set_white_attack();
+                    else
+                        cell.set_black_attack();
+                }
+            }
+            else if (piece.get_type() == 'R')
+            {
+                //TODO
+            }
+
+        }
+    }
 };
+
+void avialible_moves(Position const &position, Piece const &piece)
+{
+    return;
+}
 
 int main()
 {
