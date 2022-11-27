@@ -15,7 +15,7 @@ protected:
     char type = 'Z';
 
 public: //TODO ASK does it stay public and the upper code protected?
-    Piece() : alive(true) {};
+    Piece() : alive(true), color(true) {};
 
     Piece(bool color) : alive(true), color(color) {};
 
@@ -47,7 +47,7 @@ public: //TODO ASK does it stay public and the upper code protected?
         color = src.get_color();
     }
 
-    Piece(Piece &&src)
+    Piece(Piece &&src) noexcept
     {
         x = src.get_x();
         y = src.get_y();
@@ -56,7 +56,7 @@ public: //TODO ASK does it stay public and the upper code protected?
         color = src.get_color();
     }
 
-    Piece &operator=(Piece &src)
+    Piece &operator=(Piece const &src)
     {
         if (this == &src) return *this;
 
@@ -70,7 +70,7 @@ public: //TODO ASK does it stay public and the upper code protected?
         return *this;
     }
 
-    Piece &operator=(Piece &&src)
+    Piece &operator=(Piece &&src) noexcept
     {
         if (this == &src) return *this;
 
@@ -145,11 +145,11 @@ private:
     char vertical;
     bool empty, black_attacked = false, white_attacked = false;
     bool color;
-    Piece piece;
+    Piece *piece;
 public:
-    Cell() : x(1), y(1), vertical('a'), empty(true), color(false) {};
+    Cell() : x(1), y(1), vertical('a'), empty(true), color(false), piece(nullptr) {};
 
-    Cell(int x, int y) : x(x), y(y), vertical("nabcdefgh"[x]), empty(true), color((x + y) % 2){};
+    Cell(int x, int y) : x(x), y(y), vertical("nabcdefgh"[x]), empty(true), color((x + y) % 2), piece(nullptr) {};
 
     //TODO write destructor
     ~Cell() = default;
@@ -166,13 +166,13 @@ public:
         black_attacked = src.is_attacked_by_black();
     }
 
-    Cell(Cell &&src)
+    Cell(Cell &&src) noexcept
     {
         Cell tmp(src);
         *this = tmp;
     }
 
-    Cell &operator=(Cell &src)
+    Cell &operator=(Cell const &src)
     {
         if (this == &src) return *this;
 
@@ -185,6 +185,8 @@ public:
         std::swap(this->color, tmp.color);
         std::swap(this->white_attacked, tmp.white_attacked);
         std::swap(this->black_attacked, tmp.black_attacked);
+
+        return *this;
     }
 
     Cell &operator=(Cell &&src) noexcept
@@ -193,6 +195,8 @@ public:
 
         Cell tmp(std::move(src));
         *this = tmp;
+
+        return *this;
     }
 
     [[nodiscard]] int get_x() const { return x; } //TODO ASK nodiscard
@@ -203,7 +207,7 @@ public:
 
     [[nodiscard]] char get_vertical() const { return vertical; }
 
-    [[nodiscard]] Piece get_piece() const { return piece; }
+    [[nodiscard]] Piece *get_piece() const { return piece; }
 
     [[nodiscard]] bool is_empty() const { return empty; }
 
@@ -211,20 +215,20 @@ public:
 
     [[nodiscard]] bool is_attacked_by_black() const { return black_attacked; }
 
-    void set_attacked(bool color)
+    void set_attacked(bool p_color)
     {
-        if (color)
+        if (p_color)
             white_attacked = true;
         else
             black_attacked = true;
     }
 
-    void employ(Piece &p)
+    void employ(Piece *p)
     {
         piece = p;
         empty = false;
-        piece.move(x, y);
-        p.move(x, y); //TODO fix this with reference
+        piece->move(x, y);
+        //p.move(x, y); //TODO fix this with reference
     }
 
     void unemploy()
@@ -246,7 +250,7 @@ private:
     std::vector<Piece> pieces;
 public:
     //TODO edit constructor for custom positions
-    Position(const std::string mode)
+    Position(const std::string &mode)
     {
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
@@ -275,7 +279,7 @@ public:
 
                 if (mode == "default")
                 {
-                    board[i][j].employ(pieces[pieces.size() - 1]);
+                    board[i][j].employ(&pieces[pieces.size() - 1]);
                 }
             }
     }
@@ -292,7 +296,7 @@ public:
             pieces.push_back(src.get_piece(i));
     }
 
-    Position(Position &&src)
+    Position(Position &&src) noexcept
     {
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
@@ -301,7 +305,7 @@ public:
             pieces.push_back(src.get_piece(i));
     }
 
-    Position &operator=(Position &src)
+    Position &operator=(Position const &src)
     {
         if (this == &src) return *this;
 
@@ -310,13 +314,15 @@ public:
         std::swap(this->pieces, tmp.pieces);
     }
 
-    Position &operator=(Position &&src)
+    Position &operator=(Position &&src) noexcept
     {
         if (this == &src) return *this;
 
         Position tmp(std::move(src));
         std::swap(this->board, tmp.board);
         std::swap(this->pieces, tmp.pieces);
+
+        return *this;
     }
 
     [[nodiscard]] Cell get_cell(int x, int y) const
@@ -443,7 +449,7 @@ public:
     }
 };
 
-void avialible_moves(Position const &position, Piece const &piece)
+void available_moves(Position const &position, Piece const &piece)
 {
     return;
 }
@@ -464,7 +470,7 @@ int main()
             if (cell.is_empty())
                 std::cout << '*';
             else
-                std::cout << cell.get_piece().get_type();
+                std::cout << cell.get_piece()->get_type();
         }
 
         std::cout << std::endl;
@@ -481,7 +487,7 @@ int main()
         std::cout << std::endl;
     }
     posi.check_attack_all();
-    std::cout << std:: endl;
+    std::cout << std::endl;
     for (int y = 8; y > 0; y--)
     {
         for (int x = 1; x < 9; x++)
@@ -494,7 +500,7 @@ int main()
                 else
                     std::cout << 'W';
             }
-            else if(cell.is_attacked_by_black())
+            else if (cell.is_attacked_by_black())
                 std::cout << 'B';
             else
                 std::cout << 'n';
