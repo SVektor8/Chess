@@ -350,6 +350,29 @@ public:
         return true;
     }
 
+    bool diagonal_is_free(int x1, int y1, int x2, int y2)
+    {
+        if (x1 > x2)
+        {
+            std::swap(x1, x2);
+            std::swap(y1, y2);
+        }
+        if (y1 < y2)
+        {
+            for (int x = x1 + 1, y = y1 + 1; x < x2; x++, y++)
+                if (not board[y - 1][x - 1].is_empty())
+                    return false;
+            return true;
+        }
+        else
+        {
+            for (int x = x1 + 1, y = y1 - 1; x < x2; x++, y--)
+                if (not board[y - 1][x - 1].is_empty())
+                    return false;
+            return true;
+        }
+    }
+
     void check_attack(Piece const &piece, Cell &cell)
     {
         int c_x = cell.get_x(), c_y = cell.get_y();
@@ -388,6 +411,22 @@ public:
                 if (c_y != p_y and c_x != p_x
                     and (abs(c_y - p_y) == 3 and abs(c_x - p_x) == 1 or
                                                  abs(c_x - p_x) == 3 and abs(c_y - p_y) == 1))
+                    cell.set_attacked(color);
+            }
+            else if (piece.get_type() == 'B')
+            {
+                if (abs(c_y - p_y) == abs(c_x - p_x) and
+                    diagonal_is_free(c_x, c_y, p_x, p_y))
+                    cell.set_attacked(color);
+            }
+            else if (piece.get_type() == 'Q')
+            {
+                if (c_x == p_x and vertical_is_free(c_x, c_y, p_y)
+                                   or c_y == p_y and horizontal_is_free(c_y, c_x, p_x))
+                    cell.set_attacked(color);
+                
+                if (abs(c_y - p_y) == abs(c_x - p_x) and
+                    diagonal_is_free(c_x, c_y, p_x, p_y))
                     cell.set_attacked(color);
             }
 
