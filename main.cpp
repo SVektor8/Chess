@@ -3,7 +3,7 @@
 #include <utility>
 #include <string>
 #include <vector>
-   
+
 //TODO pieces moving (probably cycle), showing move ability (where it can move)
 
 class Piece
@@ -248,7 +248,8 @@ public:
                         pieces.push_back(Queen(i == 0 ? true : false));
                     else if (j == 4)
                         pieces.push_back(King(i == 0 ? true : false));
-                } else
+                }
+                else
                     continue;
 
                 if (mode == "default")
