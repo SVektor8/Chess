@@ -211,9 +211,13 @@ public:
 
     [[nodiscard]] bool is_attacked_by_black() const { return black_attacked; }
 
-    void set_white_attack() { white_attacked = true; }
-
-    void set_black_attack() { black_attacked = true; }
+    void set_attacked(bool color)
+    {
+        if (color)
+            white_attacked = true;
+        else
+            black_attacked = true;
+    }
 
     void employ(Piece &p)
     {
@@ -324,6 +328,27 @@ public:
         return pieces[i];
     }
 
+    bool vertical_is_free(const int x, int y1, int y2)
+    {
+        if (y1 > y2)
+            std::swap(y1, y2);
+
+        for (int y = y1 + 1; y < y2; y++)
+            if (not board[y - 1][x - 1].is_empty())
+                return false;
+        return true;
+    }
+
+    bool horizontal_is_free(const int y, int x1, int x2)
+    {
+        if (x1 > x2)
+            std::swap(x1, x2);
+
+        for (int x = x1 + 1; x < x2; x++)
+            if (not board[y - 1][x - 1].is_empty())
+                return false;
+        return true;
+    }
 
     void check_attack(Piece const &piece, Cell &cell)
     {
@@ -338,27 +363,32 @@ public:
                 if (color)
                 {
                     if (c_y - p_y == 1 and abs(c_x - p_x) == 1) // white pawn
-                        cell.set_white_attack();
+                        cell.set_attacked(color);
                 }
                 else
                 {
                     if (c_y - p_y == -1 and abs(c_x - p_x) == 1) // black pawn
-                        cell.set_black_attack();
+                        cell.set_attacked(color);
                 }
             }
             else if (piece.get_type() == 'K') // King
             {
                 if (abs(c_y - p_y) <= 1 and abs(c_x - p_x) <= 1)
-                {
-                    if (color)
-                        cell.set_white_attack();
-                    else
-                        cell.set_black_attack();
-                }
+                    cell.set_attacked(color);
             }
             else if (piece.get_type() == 'R')
             {
-                //TODO
+                if (c_x == p_x and vertical_is_free(c_x, c_y, p_y)
+                                   or c_y == p_y and horizontal_is_free(c_y, c_x, p_x))
+                    cell.set_attacked(color);
+
+            }
+            else if (piece.get_type() == 'N')
+            {
+                if (c_y != p_y and c_x != p_x
+                    and (abs(c_y - p_y) == 3 and abs(c_x - p_x) == 1 or
+                                                 abs(c_x - p_x) == 3 and abs(c_y - p_y) == 1))
+                    cell.set_attacked(color);
             }
 
         }
