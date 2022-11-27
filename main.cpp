@@ -149,7 +149,7 @@ private:
 public:
     Cell() : x(1), y(1), vertical('a'), empty(true), color(false) {};
 
-    Cell(int x, int y) : x(x), y(y), vertical("nabcdefgh"[x]), empty(true), color((x + y) % 2) {};
+    Cell(int x, int y) : x(x), y(y), vertical("nabcdefgh"[x]), empty(true), color((x + y) % 2){};
 
     //TODO write destructor
     ~Cell() = default;
@@ -224,6 +224,7 @@ public:
         piece = p;
         empty = false;
         piece.move(x, y);
+        p.move(x, y); //TODO fix this with reference
     }
 
     void unemploy()
@@ -245,7 +246,7 @@ private:
     std::vector<Piece> pieces;
 public:
     //TODO edit constructor for custom positions
-    Position(const std::string &&mode)
+    Position(const std::string mode)
     {
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
@@ -394,7 +395,7 @@ public:
                         cell.set_attacked(color);
                 }
             }
-            else if (piece.get_type() == 'K') // King
+            else if (piece.get_type() == 'K')
             {
                 if (abs(c_y - p_y) <= 1 and abs(c_x - p_x) <= 1)
                     cell.set_attacked(color);
@@ -409,8 +410,8 @@ public:
             else if (piece.get_type() == 'N')
             {
                 if (c_y != p_y and c_x != p_x
-                    and (abs(c_y - p_y) == 3 and abs(c_x - p_x) == 1 or
-                                                 abs(c_x - p_x) == 3 and abs(c_y - p_y) == 1))
+                    and (abs(c_y - p_y) == 2 and abs(c_x - p_x) == 1 or
+                                                 abs(c_x - p_x) == 2 and abs(c_y - p_y) == 1))
                     cell.set_attacked(color);
             }
             else if (piece.get_type() == 'B')
@@ -424,13 +425,21 @@ public:
                 if (c_x == p_x and vertical_is_free(c_x, c_y, p_y)
                                    or c_y == p_y and horizontal_is_free(c_y, c_x, p_x))
                     cell.set_attacked(color);
-                
+
                 if (abs(c_y - p_y) == abs(c_x - p_x) and
                     diagonal_is_free(c_x, c_y, p_x, p_y))
                     cell.set_attacked(color);
             }
-
         }
+    }
+
+    void check_attack_all()
+    {
+        for (int i = 0; i < 8; i++)
+            for (int j = 0; j < 8; j++)
+                for (int k = 0; k < 32; k++)
+                    if (pieces[k].is_alive())
+                        check_attack(pieces[k], board[i][j]);
     }
 };
 
@@ -443,8 +452,9 @@ int main()
 {
     std::cout << "Hello, Chess World!" << std::endl;
 
-    Position posi("defaul:"), pos("default");
-    posi = pos;
+    //Position posi("default");
+    Position posi = Position("default");
+    //posi = pos;
 
     for (int y = 8; y > 0; y--)
     {
@@ -466,6 +476,28 @@ int main()
         {
             Cell cell(posi.get_cell(x, y));
             std::cout << cell.get_color();
+        }
+
+        std::cout << std::endl;
+    }
+    posi.check_attack_all();
+    std::cout << std:: endl;
+    for (int y = 8; y > 0; y--)
+    {
+        for (int x = 1; x < 9; x++)
+        {
+            Cell cell(posi.get_cell(x, y));
+            if (cell.is_attacked_by_white())
+            {
+                if (cell.is_attacked_by_black())
+                    std::cout << 'b';
+                else
+                    std::cout << 'W';
+            }
+            else if(cell.is_attacked_by_black())
+                std::cout << 'B';
+            else
+                std::cout << 'n';
         }
 
         std::cout << std::endl;
