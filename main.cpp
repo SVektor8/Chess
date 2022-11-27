@@ -3,6 +3,8 @@
 #include <utility>
 #include <string>
 #include <vector>
+   
+//TODO pieces moving (probably cycle), showing move ability (where it can move)
 
 class Piece
 {
@@ -33,53 +35,56 @@ public: //TODO ASK does it stay public and the upper code protected?
         y = n_y;
     }
 
-    //TODO rewrite methods of the "the rule of 5"
-
+    //TODO write destructor
     ~Piece() = default;
 
-    Piece(Piece const &rha)
+    Piece(Piece const &src)
     {
-        x = rha.get_x();
-        y = rha.get_y();
-        type = rha.get_type();
-        alive = rha.is_alive();
-        color = rha.get_color();
-
+        x = src.get_x();
+        y = src.get_y();
+        type = src.get_type();
+        alive = src.is_alive();
+        color = src.get_color();
     }
 
-    Piece &operator=(Piece &rha)
+    Piece(Piece &&src)
     {
-        x = rha.get_x();
-        y = rha.get_y();
-        type = rha.get_type();
-        alive = rha.is_alive();
-        color = rha.get_color();
+        x = src.get_x();
+        y = src.get_y();
+        type = src.get_type();
+        alive = src.is_alive();
+        color = src.get_color();
+    }
+
+    Piece &operator=(Piece &src)
+    {
+        if (this == &src) return *this;
+
+        Piece tmp(src);
+        std::swap(this->x, tmp.x);
+        std::swap(this->y, tmp.y);
+        std::swap(this->type, tmp.type);
+        std::swap(this->alive, tmp.alive);
+        std::swap(this->color, tmp.color);
 
         return *this;
     }
 
-    Piece(Piece &&rha)
+    Piece &operator=(Piece &&src)
     {
-        x = rha.get_x();
-        y = rha.get_y();
-        type = rha.get_type();
-        alive = rha.is_alive();
-        color = rha.get_color();
-    }
+        if (this == &src) return *this;
 
-    Piece &operator=(Piece &&rha)
-    {
-        x = rha.get_x();
-        y = rha.get_y();
-        type = rha.get_type();
-        alive = rha.is_alive();
-        color = rha.get_color();
+        Piece tmp(std::move(src));
+        std::swap(this->x, tmp.x);
+        std::swap(this->y, tmp.y);
+        std::swap(this->type, tmp.type);
+        std::swap(this->alive, tmp.alive);
+        std::swap(this->color, tmp.color);
 
         return *this;
     }
 
 };
-
 
 class King final : public Piece
 {
@@ -101,8 +106,8 @@ public:
     Queen(bool color) : Piece(color) { type = 'Q'; }
 };
 
-class Rook final : public Piece //TODO ASK why not protected?
-{
+class Rook final : public Piece
+{//TODO ASK why not protected?
 private:
     bool moved;
 public:
@@ -219,7 +224,7 @@ private:
     Cell board[8][8];
     std::vector<Piece> pieces;
 public:
-    //TODO edit constructor when finish with different pieces
+    //TODO edit constructor for custom positions
     Position(const std::string &&mode)
     {
         for (int i = 0; i < 8; i++)
@@ -253,21 +258,53 @@ public:
             }
     }
 
-    //TODO upgrade methods of the "the rule of 5"
-
+    //TODO write destructor
     ~Position() = default;
 
-    Position(Position const &) = delete;
+    Position(Position const &src)
+    {
+        for (int i = 0; i < 8; i++)
+            for (int j = 0; j < 8; j++)
+                board[i][j] = src.get_cell(j + 1, i + 1);
+        for (int i = 0; i < 32; i++)
+            pieces.push_back(src.get_piece(i));
+    }
 
-    Position &operator=(Piece &) = delete;
+    Position(Position &&src)
+    {
+        for (int i = 0; i < 8; i++)
+            for (int j = 0; j < 8; j++)
+                board[i][j] = src.get_cell(j + 1, i + 1);
+        for (int i = 0; i < 32; i++)
+            pieces.push_back(src.get_piece(i));
+    }
 
-    Position(Position &&) = delete;
+    Position &operator=(Position &src)
+    {
+        if (this == &src) return *this;
 
-    Position &operator=(Position &&) = delete;
+        Position tmp(src);
+        std::swap(this->board, tmp.board);
+        std::swap(this->pieces, tmp.pieces);
+    }
 
-    Cell get_cell(int x, int y)
+    Position &operator=(Position &&src)
+    {
+        if (this == &src) return *this;
+
+        Position tmp(std::move(src));
+        std::swap(this->board, tmp.board);
+        std::swap(this->pieces, tmp.pieces);
+    }
+
+    [[nodiscard]] Cell get_cell(int x, int y) const
     {
         return board[y - 1][x - 1];
+    }
+
+    [[nodiscard]] Piece get_piece(int i) const
+    {
+        return pieces[i];
     }
 };
 
@@ -275,7 +312,8 @@ int main()
 {
     std::cout << "Hello, Chess World!" << std::endl;
 
-    Position posi("default");
+    Position posi("defaul:"), pos("default");
+    posi = pos;
 
     for (int y = 8; y > 0; y--)
     {
