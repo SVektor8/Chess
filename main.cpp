@@ -22,15 +22,15 @@ bool in_board(int x, int y)
 class Piece
 {
 protected:
-    int x, y;
-    bool alive, bounded = false, defended = false;
-    bool color; //true = white, false = black
+    int x = 0, y = 0;
+    bool alive = true, bounded = false, defended = false;
+    bool color = true; //true = white, false = black
     char type = 'Z';
 
 public: //TODO ASK does it stay public and the upper code protected?
-    Piece() : alive(true), color(true) {};
+    Piece() : alive(true), color(true), x(0), y(0), bounded(false), defended(false) {};
 
-    Piece(bool color) : alive(true), color(color) {};
+    Piece(bool color) : alive(true), color(color), x(0), y(0), bounded(false), defended(false) {};
 
     [[nodiscard]] int get_x() const { return x; }
 
@@ -206,6 +206,8 @@ private:
     std::vector<std::vector<Piece>> pieces{{},
                                            {}};
 public:
+    Pieces() : Pieces("default") {};
+
     Pieces(std::string const &mode)
     {
         if (mode == "default")
@@ -233,8 +235,17 @@ public:
 
     Pieces(Pieces const &src)
     {
-        for (int i = 0; i < 32; i++)
-            pieces[i / 16][i % 16] = src.noptr_piece_number(i);
+        if (pieces[0].empty())
+            for (int i = 0; i < 32; i++)
+            {
+                if (i < 16)
+                    pieces[0].push_back(src.noptr_piece_number(i));
+                else
+                    pieces[1].push_back(src.noptr_piece_number(i));
+            }
+        else
+            for (int i = 0; i < 32; i++)
+                pieces[i / 16][i % 16] = src.noptr_piece_number(i);
     }
 
     Pieces(Pieces &&src) noexcept
@@ -457,6 +468,8 @@ public:
         Position tmp(src);
         std::swap(this->board, tmp.board);
         std::swap(this->pieces, tmp.pieces);
+
+        return *this;
     }
 
     Position &operator=(Position &&src) noexcept
@@ -607,8 +620,8 @@ public:
                         if (in_board(x1, y1))
                             if (not board[y1 - 1][x1 - 1].is_attacked_by(not color)
                                 and (board[y1 - 1][x1 - 1].is_empty()
-                                     or board[y1 - 1][x1 - 1].can_be_taken(color)
-                                     and not board[y1 - 1][x1 - 1].get_piece()->is_defended()))
+                                     || board[y1 - 1][x1 - 1].can_be_taken(color)
+                                        and not board[y1 - 1][x1 - 1].get_piece()->is_defended()))
                             {
                                 add_moves(result, x1, y1);
                             }
@@ -631,7 +644,8 @@ public:
 
                     for (int i = -1; i < 2; i += 2)
                     {
-                        if (board[y1 - 1][x1 - 1].can_be_taken(color))
+                        if ((not board[y1 - 1][x1 - 1].is_empty()) &&
+                            board[y1 - 1][x1 - 1].can_be_taken(color))
                             add_moves(result, x1, y1);
                     }
                 }
