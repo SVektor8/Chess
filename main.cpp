@@ -6,6 +6,14 @@
 
 //TODO pieces moving (probably cycle), showing move ability (where it can move)
 
+void add_moves(std::vector<std::vector<int>> &vector, int x, int y)
+{
+    std::vector<int> tmp(2);
+    tmp[0] = x;
+    tmp[1] = y;
+    vector.push_back(tmp);
+}
+
 class Piece
 {
 protected:
@@ -215,6 +223,14 @@ public:
 
     [[nodiscard]] bool is_attacked_by_black() const { return black_attacked; }
 
+    bool is_attacked_by(bool piece_color) const
+    {
+        if (piece_color)
+            return white_attacked;
+        else
+            return black_attacked;
+    }
+
     void set_attacked(bool p_color)
     {
         if (p_color)
@@ -223,23 +239,22 @@ public:
             black_attacked = true;
     }
 
+    void set_unattacked()
+    {
+        white_attacked = false;
+        black_attacked = false;
+    }
+
     void employ(Piece *p)
     {
         piece = p;
         empty = false;
         piece->move(x, y);
-        //p.move(x, y); //TODO fix this with reference
     }
 
     void unemploy()
     {
         empty = true;
-    }
-
-    void recheck_attack()
-    {
-        white_attacked = false;
-        black_attacked = false;
     }
 };
 
@@ -247,7 +262,8 @@ class Position final
 {
 private:
     Cell board[8][8];
-    std::vector<Piece> pieces;
+    std::vector<Piece> pieces; // if default: RNBQKBNRpppppppp|ppppppppRNBQKBNR
+    bool move = true, checked = false; // true = white, false = black
 public:
     //TODO edit constructor for custom positions
     Position(const std::string &mode)
@@ -447,12 +463,29 @@ public:
                     if (pieces[k].is_alive())
                         check_attack(pieces[k], board[i][j]);
     }
-};
 
-void available_moves(Position const &position, Piece const &piece)
-{
-    return;
-}
+    void check_moves(Piece const &piece, std::vector<std::vector<int>> &result)
+    {
+        int p_x = piece.get_x();
+        int p_y = piece.get_y();
+        int color = piece.get_color();
+
+        if (piece.get_type() == 'K')
+        {
+            for (int i = -1; i < 2; i++)
+                for (int j = -1; j < 2; j++)
+                    if (i != 0 or j != 0)
+                    {
+                        int x1 = p_x + i, y1 = p_y + j;
+                        if (not board[y1 -1][x1 - 1].is_attacked_by(not color))
+                        {
+                            add_moves(result, x1, y1);
+                        }
+                    }
+        }
+        //else if
+    }
+};
 
 int main()
 {
