@@ -149,7 +149,7 @@ public:
 class Pieces final
 {
 private:
-    std::vector<std::vector<Piece *>> pieces{{},
+    std::vector<std::vector<Piece>> pieces{{},
                                              {}};
 public:
     Pieces(std::string const &mode)
@@ -158,40 +158,33 @@ public:
         {
             for (int color = 0; color < 2; color++) //TODO ASK help pls...
             {
-                King k = King(color);
-                Queen q = Queen(color);
-                Rook r1 = Rook(color);
-                Rook r2 = Rook(color);
-                Bishop b1 = Bishop(color);
-                Bishop b2 = Bishop(color);
-                Knight n1 = Knight(color);
-                Knight n2 = Knight(color);
-                pieces[color].push_back(&k);
-                pieces[color].push_back(&q);
-                pieces[color].push_back(&r1);
-                pieces[color].push_back(&r2);
-                pieces[color].push_back(&b1);
-                pieces[color].push_back(&b2);
-                pieces[color].push_back(&n1);
-                pieces[color].push_back(&n2);
+                pieces[color].push_back(King(color));
+                pieces[color].push_back(Queen(color));
+                pieces[color].push_back(Rook(color));
+                pieces[color].push_back(Rook(color));
+                pieces[color].push_back(Bishop(color));
+                pieces[color].push_back(Bishop(color));
+                pieces[color].push_back(Knight(color));
+                pieces[color].push_back(Knight(color));
                 for (int i = 0; i < 8; i++)
                 {
-                    Pawn p = Pawn(color);
-                    pieces[color].push_back(&p);
+                    pieces[color].push_back(Pawn(color));
                 }
             }
         }
     }
 
-    [[nodiscard]] Piece *king(bool color) const { return pieces[color][0]; } //TODO ASK
-    [[nodiscard]] Piece *queen(bool color) const { return pieces[color][1]; }
+    //TODO 5-rule funcs
 
-    [[nodiscard]] Piece *rook(bool color, int which) const { return pieces[color][1 + which]; } // 1 2
-    [[nodiscard]] Piece *bishop(bool color, int which) const { return pieces[color][3 + which]; } // 1 2
-    [[nodiscard]] Piece *knight(bool color, int which) const { return pieces[color][5 + which]; } // 1 2
+    [[nodiscard]] Piece *king(bool color) { return &pieces[color][0]; } //TODO ASK
+    [[nodiscard]] Piece *queen(bool color){ return &pieces[color][1]; }
+
+    [[nodiscard]] Piece *rook(bool color, int which)  { return &pieces[color][1 + which]; } // 1 2
+    [[nodiscard]] Piece *bishop(bool color, int which) { return &pieces[color][3 + which]; } // 1 2
+    [[nodiscard]] Piece *knight(bool color, int which) { return &pieces[color][5 + which]; } // 1 2
     [[nodiscard]] Piece *pawn(const bool color, const int which)
     {
-        return (pieces[color][7 + which]);
+        return (&pieces[color][7 + which]);
     } // 1 2 3 4 5 6 7 8
 };
 
