@@ -150,7 +150,7 @@ class Pieces final
 {
 private:
     std::vector<std::vector<Piece>> pieces{{},
-                                             {}};
+                                           {}};
 public:
     Pieces(std::string const &mode)
     {
@@ -177,15 +177,17 @@ public:
     //TODO 5-rule funcs
 
     [[nodiscard]] Piece *king(bool color) { return &pieces[color][0]; } //TODO ASK
-    [[nodiscard]] Piece *queen(bool color){ return &pieces[color][1]; }
+    [[nodiscard]] Piece *queen(bool color) { return &pieces[color][1]; }
 
-    [[nodiscard]] Piece *rook(bool color, int which)  { return &pieces[color][1 + which]; } // 1 2
+    [[nodiscard]] Piece *rook(bool color, int which) { return &pieces[color][1 + which]; } // 1 2
     [[nodiscard]] Piece *bishop(bool color, int which) { return &pieces[color][3 + which]; } // 1 2
     [[nodiscard]] Piece *knight(bool color, int which) { return &pieces[color][5 + which]; } // 1 2
     [[nodiscard]] Piece *pawn(const bool color, const int which)
     {
         return (&pieces[color][7 + which]);
     } // 1 2 3 4 5 6 7 8
+
+    [[nodicard]] Piece *piece_number(int which) { return &pieces[which / 16][which % 16]; }
 };
 
 class Cell final
@@ -493,9 +495,8 @@ public:
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
                 for (int k = 0; k < 32; k++)
-                    int i = 0;
-                    //if (pieces[k].is_alive())
-                        //check_attack(pieces[k], board[i][j]);
+                    if (pieces.piece_number(k)->is_alive())
+                        check_attack(*pieces.piece_number(k), board[i][j]);
     }
 
     void check_moves(Piece const &piece, std::vector<std::vector<int>> &result)
