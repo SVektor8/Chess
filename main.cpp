@@ -28,9 +28,9 @@ protected:
     char type = 'Z';
 
 public: //TODO ASK does it stay public and the upper code protected?
-    Piece() : alive(true), color(true), x(0), y(0), bounded(false), defended(false) {};
+    Piece() : Piece(true) {}; //TODO ASK explicit
 
-    Piece(bool color) : alive(true), color(color), x(0), y(0), bounded(false), defended(false) {};
+    explicit Piece(bool color) : alive(true), color(color), x(0), y(0), bounded(false), defended(false) {};
 
     [[nodiscard]] int get_x() const { return x; }
 
@@ -56,7 +56,6 @@ public: //TODO ASK does it stay public and the upper code protected?
 
     //TODO write destructor
     //TODO ASK if can simplify
-    //TODO check
     ~Piece() = default;
 
     Piece(Piece const &src)
@@ -115,7 +114,7 @@ public: //TODO ASK does it stay public and the upper code protected?
 
     virtual void move_routine() {};
 
-    [[nodiscard]] virtual bool has_moved() const {};
+    [[nodiscard]] virtual bool has_moved() const { return false;}
 
 };
 
@@ -126,7 +125,7 @@ private:
     bool checked;
 
 public:
-    King(bool color) : Piece(color), moved(false), checked(false) { type = 'K'; }
+    explicit King(bool color) : Piece(color), moved(false), checked(false) { type = 'K'; }
 
     [[nodiscard]] bool has_moved() const override { return moved; }
 
@@ -136,7 +135,7 @@ public:
 class Queen final : public Piece
 {
 public:
-    Queen(bool color) : Piece(color) { type = 'Q'; }
+    explicit Queen(bool color) : Piece(color) { type = 'Q'; }
 
     void move_routine() override
     {
@@ -150,7 +149,7 @@ class Rook final : public Piece
 private:
     bool moved;
 public:
-    Rook(bool color) : Piece(color), moved(false) { type = 'R'; }
+    explicit Rook(bool color) : Piece(color), moved(false) { type = 'R'; }
 
     [[nodiscard]] bool has_moved() const override { return moved; }
 
@@ -164,7 +163,7 @@ public:
 class Bishop final : public Piece
 {
 public:
-    Bishop(bool color) : Piece(color) { type = 'B'; }
+    explicit Bishop(bool color) : Piece(color) { type = 'B'; }
 
     void move_routine() override
     {
@@ -176,7 +175,7 @@ public:
 class Knight final : public Piece
 {
 public:
-    Knight(bool color) : Piece(color) { type = 'N'; }
+    explicit Knight(bool color) : Piece(color) { type = 'N'; }
 
     void move_routine() override
     {
@@ -190,7 +189,7 @@ class Pawn final : public Piece
 private:
     bool moved;
 public:
-    Pawn(bool color) : Piece(color), moved(false) { type = 'p'; } //TODO ASK why cannot write x(X)
+    explicit Pawn(bool color) : Piece(color), moved(false) { type = 'p'; } //TODO ASK why cannot write x(X)
 
     [[nodiscard]] bool has_moved() const override { return moved; }
 
@@ -201,15 +200,15 @@ public:
     }
 };
 
-class Pieces final
+class Pieces_Manager final
 {
 private:
     std::vector<std::vector<Piece>> pieces{{},
                                            {}};
 public:
-    Pieces() : Pieces("default") {};
+    Pieces_Manager() : Pieces_Manager("default") {};
 
-    Pieces(std::string const &mode)
+    explicit Pieces_Manager(std::string const &mode)
     {
         if (mode == "default")
         {
@@ -232,9 +231,9 @@ public:
     }
 
     //TODO destructor
-    ~Pieces() = default;
+    ~Pieces_Manager() = default;
 
-    Pieces(Pieces const &src)
+    Pieces_Manager(Pieces_Manager const &src)
     {
         if (pieces[0].empty())
             for (int i = 0; i < 32; i++)
@@ -249,27 +248,26 @@ public:
                 pieces[i / 16][i % 16] = src.noptr_piece_number(i);
     }
 
-    Pieces(Pieces &&src) noexcept
+    Pieces_Manager(Pieces_Manager &&src) noexcept
     {
-        Pieces tmp(src);
-        *this = tmp;
+        *this = src;
     }
 
-    Pieces &operator=(Pieces const &src)
+    Pieces_Manager &operator=(Pieces_Manager const &src)
     {
         if (this == &src) return *this;
 
-        Pieces tmp(src);
+        Pieces_Manager tmp(src);
         std::swap(this->pieces, tmp.pieces);
 
         return *this;
     }
 
-    Pieces &operator=(Pieces &&src) noexcept
+    Pieces_Manager &operator=(Pieces_Manager &&src) noexcept
     {
         if (this == &src) return *this;
 
-        Pieces tmp(src);
+        Pieces_Manager tmp(src);
         *this = tmp;
 
         return *this;
@@ -321,8 +319,7 @@ public:
 
     Cell(Cell &&src) noexcept
     {
-        Cell tmp(src);
-        *this = tmp;
+        *this = src;
     }
 
     Cell &operator=(Cell const &src)
@@ -368,9 +365,9 @@ public:
 
     [[nodiscard]] bool is_attacked_by_black() const { return black_attacked; }
 
-    bool can_be_taken(bool piece_color) const { return piece->get_color() != piece_color; }
+    [[nodiscard]] bool can_be_taken(bool piece_color) const { return piece->get_color() != piece_color; }
 
-    bool is_attacked_by(bool piece_color) const
+    [[nodiscard]] bool is_attacked_by(bool piece_color) const
     {
         if (piece_color)
             return white_attacked;
@@ -409,11 +406,11 @@ class Position final
 {
 private:
     Cell board[8][8];
-    Pieces pieces = Pieces("default");
+    Pieces_Manager pieces = Pieces_Manager("default");
     bool move = true, checked = false; // true = white, false = black
 public:
     //TODO edit constructor for custom positions
-    Position(const std::string &mode)
+    explicit Position(const std::string &mode)
     {
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
@@ -489,7 +486,7 @@ public:
         return board[y - 1][x - 1];
     }
 
-    [[nodiscard]] Pieces get_pieces() const { return pieces; }
+    [[nodiscard]] Pieces_Manager get_pieces() const { return pieces; }
 
     bool vertical_is_free(const int x, int y1, int y2)
     {
@@ -597,11 +594,11 @@ public:
 
     void check_attack_all()
     {
-        for (int i = 0; i < 8; i++)
-            for (int j = 0; j < 8; j++)
+        for (auto & i : board)
+            for (auto & j : i)
                 for (int k = 0; k < 32; k++)
                     if (pieces.piece_number(k)->is_alive())
-                        check_attack(*pieces.piece_number(k), board[i][j]);
+                        check_attack(*pieces.piece_number(k), j);
     }
 
     void check_moves(Piece const &piece, std::vector<std::vector<int>> &result)
@@ -631,6 +628,7 @@ public:
         else
         {
             if (type == 'p')
+            {
                 if (color)
                 {
                     if (not piece.has_moved())
@@ -639,17 +637,41 @@ public:
                         if (board[y1 - 1][x1 - 1].is_empty())
                             add_moves(result, x1, y1);
                     }
-                    int x1 = p_x, y1 = p_y + 1;
-                    if (board[y1 - 1][x1 - 1].is_empty())
-                        add_moves(result, x1, y1);
-
+                    {
+                        int x1 = p_x, y1 = p_y + 1;
+                        if (board[y1 - 1][x1 - 1].is_empty())
+                            add_moves(result, x1, y1);
+                    }
                     for (int i = -1; i < 2; i += 2)
                     {
+                        int x1 = p_x + 1, y1 = p_y + 1;
                         if ((not board[y1 - 1][x1 - 1].is_empty()) &&
                             board[y1 - 1][x1 - 1].can_be_taken(color))
                             add_moves(result, x1, y1);
                     }
                 }
+                else
+                {
+                    if (not piece.has_moved())
+                    {
+                        int x1 = p_x, y1 = p_y - 2;
+                        if (board[y1 - 1][x1 - 1].is_empty())
+                            add_moves(result, x1, y1);
+                    }
+                    {
+                        int x1 = p_x, y1 = p_y - 1;
+                        if (board[y1 - 1][x1 - 1].is_empty())
+                            add_moves(result, x1, y1);
+                    }
+                    for (int i = -1; i < 2; i += 2)
+                    {
+                        int x1 = p_x + i, y1 = p_y - 1;
+                        if ((not board[y1 - 1][x1 - 1].is_empty()) &&
+                            board[y1 - 1][x1 - 1].can_be_taken(color))
+                            add_moves(result, x1, y1);
+                    }
+                }
+            }
         }
     }
 };
@@ -706,16 +728,29 @@ int main()
                 std::cout << 'n';
         }
 
-        std::vector<std::vector<int>> res{};
-
-        posi.check_moves(*(posi.get_pieces().pawn(true, 1)), res);
-
-        for (int i = 0; i < res.size(); i++)
-        {
-            std::cout << res[i][0] << ' ' << res[i][1] << std::endl;
-        }
 
         std::cout << std::endl;
     }
+
+    std::vector<std::vector<int>> res{};
+
+    posi.check_moves(*(posi.get_pieces().pawn(true, 1)), res);
+
+    for (auto & re : res)
+    {
+        std::cout << re[0] << ' ' << re[1] << std::endl;
+    }
+
+    std::cout << std::endl;
+
+    std::vector<std::vector<int>> res1{};
+
+    posi.check_moves(*(posi.get_pieces().pawn(false, 1)), res1);
+
+    for (auto & i : res1)
+    {
+        std::cout << i[0] << ' ' << i[1] << std::endl;
+    }
+
     return 0;
 }
