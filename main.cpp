@@ -149,35 +149,50 @@ public:
 class Pieces final
 {
 private:
-    std::vector<std::vector<Piece>> pieces{{},{}};
+    std::vector<std::vector<Piece *>> pieces{{},
+                                             {}};
 public:
-    Pieces(std::string const& mode)
+    Pieces(std::string const &mode)
     {
         if (mode == "default")
         {
-            for (int color = 0; color < 2; color ++)
+            for (int color = 0; color < 2; color++) //TODO ASK help pls...
             {
-                pieces[color].push_back(King(color));
-                pieces[color].push_back(Queen(color));
-                pieces[color].push_back(Rook(color));
-                pieces[color].push_back(Rook(color));
-                pieces[color].push_back(Bishop(color));
-                pieces[color].push_back(Bishop(color));
-                pieces[color].push_back(Knight(color));
-                pieces[color].push_back(Knight(color));
+                King k = King(color);
+                Queen q = Queen(color);
+                Rook r1 = Rook(color);
+                Rook r2 = Rook(color);
+                Bishop b1 = Bishop(color);
+                Bishop b2 = Bishop(color);
+                Knight n1 = Knight(color);
+                Knight n2 = Knight(color);
+                pieces[color].push_back(&k);
+                pieces[color].push_back(&q);
+                pieces[color].push_back(&r1);
+                pieces[color].push_back(&r2);
+                pieces[color].push_back(&b1);
+                pieces[color].push_back(&b2);
+                pieces[color].push_back(&n1);
+                pieces[color].push_back(&n2);
                 for (int i = 0; i < 8; i++)
                 {
-                    pieces[color].push_back(Pawn(color));
+                    Pawn p = Pawn(color);
+                    pieces[color].push_back(&p);
                 }
             }
         }
     }
-    [[nodiscard]] Piece king(bool color) const {return pieces[color][0];}
-    [[nodiscard]] Piece queen(bool color) const {return pieces[color][1];}
-    [[nodiscard]] Piece rook(bool color, int which) const {return pieces[color][1 + which];} // 1 2
-    [[nodiscard]] Piece bishop(bool color, int which) const {return pieces[color][3 + which];} // 1 2
-    [[nodiscard]] Piece knight(bool color, int which) const {return pieces[color][5 + which];} // 1 2
-    Piece& pawn(bool color, int which) const {return &(pieces[color][7 + which]);} // 1 2 3 4 5 6 7 8
+
+    [[nodiscard]] Piece *king(bool color) const { return pieces[color][0]; } //TODO ASK
+    [[nodiscard]] Piece *queen(bool color) const { return pieces[color][1]; }
+
+    [[nodiscard]] Piece *rook(bool color, int which) const { return pieces[color][1 + which]; } // 1 2
+    [[nodiscard]] Piece *bishop(bool color, int which) const { return pieces[color][3 + which]; } // 1 2
+    [[nodiscard]] Piece *knight(bool color, int which) const { return pieces[color][5 + which]; } // 1 2
+    [[nodiscard]] Piece *pawn(const bool color, const int which)
+    {
+        return (pieces[color][7 + which]);
+    } // 1 2 3 4 5 6 7 8
 };
 
 class Cell final
@@ -310,21 +325,21 @@ public:
                 if (mode == "default")
                 {
                     if (i == 1)
-                        board[i][j].employ(&(pieces.pawn(true, j + 1)))//[pieces.size() - 1]);
+                        board[i][j].employ(pieces.pawn(true, j + 1));
                     else if (i == 6)
-                        pieces.push_back(Pawn(false));
+                        board[i][j].employ(pieces.pawn(false, j + 1));
                     else if (i == 0 or i == 7)
                     {
                         if (j == 0 or j == 7)
-                            pieces.push_back(Rook(i == 0 ? true : false));
+                            board[i][j].employ(pieces.rook(i == 0, j == 0 ? 1 : 2));
                         else if (j == 1 or j == 6)
-                            pieces.push_back(Knight(i == 0 ? true : false));
+                            board[i][j].employ(pieces.knight(i == 0, j == 1 ? 1 : 2));
                         else if (j == 2 or j == 5)
-                            pieces.push_back(Bishop(i == 0 ? true : false));
+                            board[i][j].employ(pieces.bishop(i == 0, j == 2 ? 1 : 2));
                         else if (j == 3)
-                            pieces.push_back(Queen(i == 0 ? true : false));
+                            board[i][j].employ(pieces.queen(i == 0));
                         else if (j == 4)
-                            pieces.push_back(King(i == 0 ? true : false));
+                            board[i][j].employ(pieces.king(i == 0));
                     }
                 }
             }
@@ -338,8 +353,7 @@ public:
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
                 board[i][j] = src.get_cell(j + 1, i + 1);
-        for (int i = 0; i < 32; i++)
-            pieces.push_back(src.get_piece(i));
+        pieces = src.get_pieces();
     }
 
     Position(Position &&src) noexcept
@@ -347,8 +361,7 @@ public:
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
                 board[i][j] = src.get_cell(j + 1, i + 1);
-        for (int i = 0; i < 32; i++)
-            pieces.push_back(src.get_piece(i));
+        pieces = src.get_pieces();
     }
 
     Position &operator=(Position const &src)
@@ -376,15 +389,7 @@ public:
         return board[y - 1][x - 1];
     }
 
-    [[nodiscard]] Piece get_piece(int i) const
-    {
-        return pieces[i];
-    }
-
-    void init_pieces()
-    {
-
-    }
+    [[nodiscard]] Pieces get_pieces() const { return pieces; }
 
     bool vertical_is_free(const int x, int y1, int y2)
     {
@@ -495,8 +500,9 @@ public:
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
                 for (int k = 0; k < 32; k++)
-                    if (pieces[k].is_alive())
-                        check_attack(pieces[k], board[i][j]);
+                    int i = 0;
+                    //if (pieces[k].is_alive())
+                        //check_attack(pieces[k], board[i][j]);
     }
 
     void check_moves(Piece const &piece, std::vector<std::vector<int>> &result)
@@ -512,7 +518,7 @@ public:
                     if (i != 0 or j != 0)
                     {
                         int x1 = p_x + i, y1 = p_y + j;
-                        if (not board[y1 -1][x1 - 1].is_attacked_by(not color))
+                        if (not board[y1 - 1][x1 - 1].is_attacked_by(not color))
                         {
                             add_moves(result, x1, y1);
                         }
