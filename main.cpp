@@ -146,6 +146,40 @@ public:
     [[nodiscard]] bool has_moved() const { return moved; }
 };
 
+class Pieces final
+{
+private:
+    std::vector<std::vector<Piece>> pieces{{},{}};
+public:
+    Pieces(std::string const& mode)
+    {
+        if (mode == "default")
+        {
+            for (int color = 0; color < 2; color ++)
+            {
+                pieces[color].push_back(King(color));
+                pieces[color].push_back(Queen(color));
+                pieces[color].push_back(Rook(color));
+                pieces[color].push_back(Rook(color));
+                pieces[color].push_back(Bishop(color));
+                pieces[color].push_back(Bishop(color));
+                pieces[color].push_back(Knight(color));
+                pieces[color].push_back(Knight(color));
+                for (int i = 0; i < 8; i++)
+                {
+                    pieces[color].push_back(Pawn(color));
+                }
+            }
+        }
+    }
+    [[nodiscard]] Piece king(bool color) const {return pieces[color][0];}
+    [[nodiscard]] Piece queen(bool color) const {return pieces[color][1];}
+    [[nodiscard]] Piece rook(bool color, int which) const {return pieces[color][1 + which];} // 1 2
+    [[nodiscard]] Piece bishop(bool color, int which) const {return pieces[color][3 + which];} // 1 2
+    [[nodiscard]] Piece knight(bool color, int which) const {return pieces[color][5 + which];} // 1 2
+    Piece& pawn(bool color, int which) const {return &(pieces[color][7 + which]);} // 1 2 3 4 5 6 7 8
+};
+
 class Cell final
 {
 private:
@@ -262,7 +296,7 @@ class Position final
 {
 private:
     Cell board[8][8];
-    std::vector<Piece> pieces; // if default: RNBQKBNRpppppppp|ppppppppRNBQKBNR
+    Pieces pieces = Pieces("default");
     bool move = true, checked = false; // true = white, false = black
 public:
     //TODO edit constructor for custom positions
@@ -273,29 +307,25 @@ public:
             {
                 board[i][j] = Cell(j + 1, i + 1);
 
-                if (i == 1)
-                    pieces.push_back(Pawn(true));
-                else if (i == 6)
-                    pieces.push_back(Pawn(false));
-                else if (i == 0 or i == 7)
-                {
-                    if (j == 0 or j == 7)
-                        pieces.push_back(Rook(i == 0 ? true : false));
-                    else if (j == 1 or j == 6)
-                        pieces.push_back(Knight(i == 0 ? true : false));
-                    else if (j == 2 or j == 5)
-                        pieces.push_back(Bishop(i == 0 ? true : false));
-                    else if (j == 3)
-                        pieces.push_back(Queen(i == 0 ? true : false));
-                    else if (j == 4)
-                        pieces.push_back(King(i == 0 ? true : false));
-                }
-                else
-                    continue;
-
                 if (mode == "default")
                 {
-                    board[i][j].employ(&pieces[pieces.size() - 1]);
+                    if (i == 1)
+                        board[i][j].employ(&(pieces.pawn(true, j + 1)))//[pieces.size() - 1]);
+                    else if (i == 6)
+                        pieces.push_back(Pawn(false));
+                    else if (i == 0 or i == 7)
+                    {
+                        if (j == 0 or j == 7)
+                            pieces.push_back(Rook(i == 0 ? true : false));
+                        else if (j == 1 or j == 6)
+                            pieces.push_back(Knight(i == 0 ? true : false));
+                        else if (j == 2 or j == 5)
+                            pieces.push_back(Bishop(i == 0 ? true : false));
+                        else if (j == 3)
+                            pieces.push_back(Queen(i == 0 ? true : false));
+                        else if (j == 4)
+                            pieces.push_back(King(i == 0 ? true : false));
+                    }
                 }
             }
     }
@@ -349,6 +379,11 @@ public:
     [[nodiscard]] Piece get_piece(int i) const
     {
         return pieces[i];
+    }
+
+    void init_pieces()
+    {
+
     }
 
     bool vertical_is_free(const int x, int y1, int y2)
