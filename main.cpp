@@ -14,11 +14,16 @@ void add_moves(std::vector<std::vector<int>> &vector, int x, int y)
     vector.push_back(tmp);
 }
 
+bool in_board(int x, int y)
+{
+    return (x > 0 and x < 9 and y > 0 and y < 9);
+}
+
 class Piece
 {
 protected:
     int x, y;
-    bool alive;
+    bool alive, bounded = false, defended = false;
     bool color; //true = white, false = black
     char type = 'Z';
 
@@ -37,6 +42,12 @@ public: //TODO ASK does it stay public and the upper code protected?
 
     [[nodiscard]] bool is_alive() const { return alive; }
 
+    [[nodiscard]] bool is_bounded() const { return bounded; }
+
+    [[nodiscard]] bool is_defended() const { return defended; }
+
+    void bound() { bounded = true; }
+
     void move(int n_x, int n_y)
     {
         x = n_x;
@@ -44,6 +55,7 @@ public: //TODO ASK does it stay public and the upper code protected?
     }
 
     //TODO write destructor
+    //TODO ASK if can simplify
     ~Piece() = default;
 
     Piece(Piece const &src)
@@ -53,6 +65,8 @@ public: //TODO ASK does it stay public and the upper code protected?
         type = src.get_type();
         alive = src.is_alive();
         color = src.get_color();
+        bounded = src.is_bounded();
+        defended = src.is_defended();
     }
 
     Piece(Piece &&src) noexcept
@@ -62,6 +76,8 @@ public: //TODO ASK does it stay public and the upper code protected?
         type = src.get_type();
         alive = src.is_alive();
         color = src.get_color();
+        bounded = src.is_bounded();
+        defended = src.is_defended();
     }
 
     Piece &operator=(Piece const &src)
@@ -74,6 +90,8 @@ public: //TODO ASK does it stay public and the upper code protected?
         std::swap(this->type, tmp.type);
         std::swap(this->alive, tmp.alive);
         std::swap(this->color, tmp.color);
+        std::swap(this->bounded, tmp.bounded);
+        std::swap(this->defended, tmp.defended);
 
         return *this;
     }
@@ -88,9 +106,15 @@ public: //TODO ASK does it stay public and the upper code protected?
         std::swap(this->type, tmp.type);
         std::swap(this->alive, tmp.alive);
         std::swap(this->color, tmp.color);
+        std::swap(this->bounded, tmp.bounded);
+        std::swap(this->defended, tmp.defended);
 
         return *this;
     }
+
+    virtual void move_routine() {};
+
+    [[nodiscard]] virtual bool has_moved() const {};
 
 };
 
@@ -103,7 +127,7 @@ private:
 public:
     King(bool color) : Piece(color), moved(false), checked(false) { type = 'K'; }
 
-    [[nodiscard]] bool has_moved() const { return moved; }
+    [[nodiscard]] bool has_moved() const override { return moved; }
 
     [[nodiscard]] bool was_checked() const { return checked; }
 };
@@ -112,6 +136,12 @@ class Queen final : public Piece
 {
 public:
     Queen(bool color) : Piece(color) { type = 'Q'; }
+
+    void move_routine() override
+    {
+        bounded = false;
+        defended = false;
+    }
 };
 
 class Rook final : public Piece
@@ -121,19 +151,37 @@ private:
 public:
     Rook(bool color) : Piece(color), moved(false) { type = 'R'; }
 
-    [[nodiscard]] bool has_moved() const { return moved; }
+    [[nodiscard]] bool has_moved() const override{ return moved; }
+
+    void move_routine() override
+    {
+        bounded = false;
+        defended = false;
+    }
 };
 
 class Bishop final : public Piece
 {
 public:
     Bishop(bool color) : Piece(color) { type = 'B'; }
+
+    void move_routine() override
+    {
+        bounded = false;
+        defended = false;
+    }
 };
 
 class Knight final : public Piece
 {
 public:
     Knight(bool color) : Piece(color) { type = 'N'; }
+
+    void move_routine() override
+    {
+        bounded = false;
+        defended = false;
+    }
 };
 
 class Pawn final : public Piece
@@ -143,7 +191,13 @@ private:
 public:
     Pawn(bool color) : Piece(color), moved(false) { type = 'p'; } //TODO ASK why cannot write x(X)
 
-    [[nodiscard]] bool has_moved() const { return moved; }
+    [[nodiscard]] bool has_moved() const override{ return moved; }
+
+    void move_routine() override
+    {
+        bounded = false;
+        defended = false;
+    }
 };
 
 class Pieces final
@@ -266,6 +320,8 @@ public:
     [[nodiscard]] bool is_attacked_by_white() const { return white_attacked; }
 
     [[nodiscard]] bool is_attacked_by_black() const { return black_attacked; }
+
+    bool can_be_taken(bool piece_color) const { return piece->get_color() != piece_color;}
 
     bool is_attacked_by(bool piece_color) const
     {
@@ -500,25 +556,51 @@ public:
     }
 
     void check_moves(Piece const &piece, std::vector<std::vector<int>> &result)
-    {
+    {//TODO add checks, bounds, move en passant, taking other pieces, etc. ...
         int p_x = piece.get_x();
         int p_y = piece.get_y();
         int color = piece.get_color();
+        char type = piece.get_type();
 
-        if (piece.get_type() == 'K')
+        if (type == 'K')
         {
             for (int i = -1; i < 2; i++)
                 for (int j = -1; j < 2; j++)
                     if (i != 0 or j != 0)
                     {
                         int x1 = p_x + i, y1 = p_y + j;
-                        if (not board[y1 - 1][x1 - 1].is_attacked_by(not color))
-                        {
-                            add_moves(result, x1, y1);
-                        }
+                        if (in_board(x1, y1))
+                            if (not board[y1 - 1][x1 - 1].is_attacked_by(not color)
+                                and (board[y1 - 1][x1 - 1].is_empty()
+                                     or board[y1 - 1][x1 - 1].can_be_taken(color)
+                                     and not board[y1 - 1][x1 - 1].get_piece()->is_defended()))
+                            {
+                                add_moves(result, x1, y1);
+                            }
                     }
         }
-        //else if
+        else
+        {
+            if (type == 'p')
+                if (color)
+                {
+                    if (not piece.has_moved())
+                    {
+                        int x1 = p_x, y1 = p_y + 2;
+                        if (board[y1 - 1][x1 - 1].is_empty())
+                            add_moves(result, x1, y1);
+                    }
+                    int x1 = p_x, y1 = p_y + 1;
+                    if (board[y1 - 1][x1 - 1].is_empty())
+                        add_moves(result, x1, y1);
+
+                    for(int i = -1; i < 2; i+=2)
+                    {
+                        if (board[y1-1][x1-1].can_be_taken(color))
+                            add_moves(result, x1, y1);
+                    }
+                }
+        }
     }
 };
 
