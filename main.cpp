@@ -151,7 +151,7 @@ private:
 public:
     Rook(bool color) : Piece(color), moved(false) { type = 'R'; }
 
-    [[nodiscard]] bool has_moved() const override{ return moved; }
+    [[nodiscard]] bool has_moved() const override { return moved; }
 
     void move_routine() override
     {
@@ -191,7 +191,7 @@ private:
 public:
     Pawn(bool color) : Piece(color), moved(false) { type = 'p'; } //TODO ASK why cannot write x(X)
 
-    [[nodiscard]] bool has_moved() const override{ return moved; }
+    [[nodiscard]] bool has_moved() const override { return moved; }
 
     void move_routine() override
     {
@@ -228,7 +228,40 @@ public:
         }
     }
 
-    //TODO 5-rule funcs
+    //TODO destructor
+    ~Pieces() = default;
+
+    Pieces(Pieces const &src)
+    {
+        for (int i = 0; i < 32; i++)
+            pieces[i / 16][i % 16] = src.noptr_piece_number(i);
+    }
+
+    Pieces(Pieces &&src) noexcept
+    {
+        Pieces tmp(src);
+        *this = tmp;
+    }
+
+    Pieces &operator=(Pieces const &src)
+    {
+        if (this == &src) return *this;
+
+        Pieces tmp(src);
+        std::swap(this->pieces, tmp.pieces);
+
+        return *this;
+    }
+
+    Pieces &operator=(Pieces &&src) noexcept
+    {
+        if (this == &src) return *this;
+
+        Pieces tmp(src);
+        *this = tmp;
+
+        return *this;
+    }
 
     [[nodiscard]] Piece *king(bool color) { return &pieces[color][0]; } //TODO ASK
     [[nodiscard]] Piece *queen(bool color) { return &pieces[color][1]; }
@@ -241,7 +274,9 @@ public:
         return (&pieces[color][7 + which]);
     } // 1 2 3 4 5 6 7 8
 
-    [[nodicard]] Piece *piece_number(int which) { return &pieces[which / 16][which % 16]; }
+    [[nodiscard]] Piece *piece_number(int which) { return &pieces[which / 16][which % 16]; }
+
+    [[nodiscard]] Piece noptr_piece_number(int which) const { return pieces[which / 16][which % 16]; }
 };
 
 class Cell final
@@ -321,7 +356,7 @@ public:
 
     [[nodiscard]] bool is_attacked_by_black() const { return black_attacked; }
 
-    bool can_be_taken(bool piece_color) const { return piece->get_color() != piece_color;}
+    bool can_be_taken(bool piece_color) const { return piece->get_color() != piece_color; }
 
     bool is_attacked_by(bool piece_color) const
     {
@@ -594,9 +629,9 @@ public:
                     if (board[y1 - 1][x1 - 1].is_empty())
                         add_moves(result, x1, y1);
 
-                    for(int i = -1; i < 2; i+=2)
+                    for (int i = -1; i < 2; i += 2)
                     {
-                        if (board[y1-1][x1-1].can_be_taken(color))
+                        if (board[y1 - 1][x1 - 1].can_be_taken(color))
                             add_moves(result, x1, y1);
                     }
                 }
@@ -654,6 +689,15 @@ int main()
                 std::cout << 'B';
             else
                 std::cout << 'n';
+        }
+
+        std::vector<std::vector<int>> res{};
+
+        posi.check_moves(*(posi.get_pieces().pawn(true, 1)), res);
+
+        for (int i = 0; i < res.size(); i++)
+        {
+            std::cout << res[i][0] << ' ' << res[i][1] << std::endl;
         }
 
         std::cout << std::endl;
