@@ -100,7 +100,7 @@ public: //TODO ASK does it stay public and the upper code protected?
     {
         if (this == &src) return *this;
 
-        Piece tmp(std::move(src));
+        Piece tmp(src);
         std::swap(this->x, tmp.x);
         std::swap(this->y, tmp.y);
         std::swap(this->type, tmp.type);
@@ -202,7 +202,7 @@ public:
 
 class Pieces final
 {
-private:
+public:
     std::vector<std::vector<Piece>> pieces{{},
                                            {}};
 public:
@@ -239,16 +239,18 @@ public:
 
     Pieces(Pieces &&src) noexcept
     {
-        Pieces tmp(src);
-        *this = tmp;
+        for (int i = 0; i < 32; i++)
+            pieces[i / 16][i % 16] = src.noptr_piece_number(i);
     }
 
     Pieces &operator=(Pieces const &src)
     {
         if (this == &src) return *this;
 
-        Pieces tmp(src);
-        std::swap(this->pieces, tmp.pieces);
+        //Pieces tmp(src);
+
+        for (int i = 0; i < 32; i++)
+            pieces[i / 16][i % 16] = src.noptr_piece_number(i);
 
         return *this;
     }
@@ -257,8 +259,9 @@ public:
     {
         if (this == &src) return *this;
 
-        Pieces tmp(src);
-        *this = tmp;
+        //Pieces tmp(src);
+        for (int i = 0; i < 32; i++)
+            pieces[i / 16][i % 16] = src.noptr_piece_number(i);
 
         return *this;
     }
@@ -452,11 +455,14 @@ public:
 
     Position &operator=(Position const &src)
     {
-        if (this == &src) return *this;
+        //if (this == &src) return *this;
 
         Position tmp(src);
         std::swap(this->board, tmp.board);
-        std::swap(this->pieces, tmp.pieces);
+        //std::swap(this->pieces, tmp.pieces);
+        this->pieces = tmp.get_pieces();
+
+        return *this;
     }
 
     Position &operator=(Position &&src) noexcept
@@ -465,7 +471,8 @@ public:
 
         Position tmp(std::move(src));
         std::swap(this->board, tmp.board);
-        std::swap(this->pieces, tmp.pieces);
+        //std::swap(this->pieces, tmp.pieces);
+        this->pieces = tmp.get_pieces();
 
         return *this;
     }
