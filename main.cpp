@@ -56,6 +56,7 @@ public: //TODO ASK does it stay public and the upper code protected?
 
     //TODO write destructor
     //TODO ASK if can simplify
+    //TODO check
     ~Piece() = default;
 
     Piece(Piece const &src)
