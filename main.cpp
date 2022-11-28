@@ -14,6 +14,17 @@ void add_moves(std::vector<std::vector<int>> &vector, int x, int y)
     vector.push_back(tmp);
 }
 
+int color_piece(int piece_number, bool color)
+{
+    if (color)
+        return piece_number;
+    else
+        if (piece_number < 8)
+            return piece_number + 24;
+        else
+            return piece_number + 8;
+}
+
 class Piece
 {
 protected:
