@@ -23,14 +23,14 @@ class Piece
 {
 protected:
     int x = 0, y = 0;
-    bool alive = true, bounded = false, defended = false;
+    bool alive = false, bounded = false, defended = false;
     bool color = true; //true = white, false = black
     char type = 'Z';
 
 public: //TODO ASK does it stay public and the upper code protected?
     Piece() : Piece(true) {}; //TODO ASK explicit
 
-    explicit Piece(bool color) : alive(true), color(color), x(0), y(0), bounded(false), defended(false) {};
+    explicit Piece(bool color) : alive(false), color(color), x(0), y(0), bounded(false), defended(false) {};
 
     [[nodiscard]] int get_x() const { return x; }
 
@@ -115,6 +115,10 @@ public: //TODO ASK does it stay public and the upper code protected?
     virtual void move_routine() {};
 
     [[nodiscard]] virtual bool has_moved() const { return false; }
+
+    void die() {alive = false;}
+
+    void respawn() {alive = true;}
 
 };
 
@@ -394,11 +398,13 @@ public:
         piece = p;
         empty = false;
         piece->move(x, y);
+        piece->respawn();
     }
 
     void unemploy()
     {
         empty = true;
+        piece->die();
     }
 };
 
@@ -440,9 +446,12 @@ public:
 
                 else if (mode == "Q_custom")
                 {
-                    q_custom(pieces.rook(false, 1), i, j, 4, 4);
-                    q_custom(pieces.pawn(true, 1), i, j, 7, 4);
-                    q_custom(pieces.king(true), i, j, 8, 4);
+                    //q_custom(pieces.rook(false, 1), i, j, 4, 4);
+                    //q_custom(pieces.pawn(true, 1), i, j, 7, 4);
+                    //q_custom(pieces.king(true), i, j, 8, 4);
+                    //q_custom(pieces.queen(true), i, j, 5, 6);
+                    q_custom(pieces.knight(false, 1), i, j, 4, 6);
+                    q_custom(pieces.bishop(true, 1), i, j, 3, 7);
                 }
 
                 else
@@ -551,7 +560,7 @@ public:
         int p_x = piece.get_x(), p_y = piece.get_y();
         bool color = piece.get_color();
 
-        if (not(c_x == p_x and (c_y == p_y)))
+        if (piece.is_alive() and not(c_x == p_x and (c_y == p_y)))
         {
             if (piece.get_type() == 'p')
             {
@@ -726,7 +735,7 @@ int main()
         }
 
         std::cout << std::endl;
-    }
+    }*/
     posi.check_attack_all();
     std::cout << std::endl;
     for (int y = 8; y > 0; y--)
@@ -750,7 +759,7 @@ int main()
 
         std::cout << std::endl;
     }
-
+/*
     std::vector<std::vector<int>> res{};
 
     posi.check_moves(*(posi.get_pieces().pawn(true, 1)), res);
