@@ -184,6 +184,7 @@ class Pieces_Manager final
 private:
     std::vector<std::vector<Piece>> pieces{{},
                                            {}};
+    unsigned long long size = 0;
 public:
     Pieces_Manager() : Pieces_Manager("default") {};
 
@@ -207,6 +208,35 @@ public:
                 }
             }
         }
+        else if (mode == "extended")
+        {
+            for (int color = 0; color < 2; color++)
+            {
+                pieces[color].push_back(King(color));
+                pieces[color].push_back(Queen(color));
+                pieces[color].push_back(Rook(color));
+                pieces[color].push_back(Rook(color));
+                pieces[color].push_back(Bishop(color));
+                pieces[color].push_back(Bishop(color));
+                pieces[color].push_back(Knight(color));
+                pieces[color].push_back(Knight(color));
+                for (int i = 0; i < 8; i++)
+                {
+                    pieces[color].push_back(Pawn(color));
+                }
+                for (int i = 0; i < 8; i++)
+                {
+                    pieces[color].push_back(Queen(color));
+                    pieces[color].push_back(Rook(color));
+                    pieces[color].push_back(Bishop(color));
+                    pieces[color].push_back(Knight(color));
+                }
+            }
+        }
+        else
+            std::cout << "no such mode" << std::endl;
+
+        size = pieces[0].size();
     }
 
     //TODO destructor
@@ -225,6 +255,8 @@ public:
         else
             for (int i = 0; i < 32; i++)
                 pieces[i / 16][i % 16] = src.no_ptr_piece_number(i);
+
+        size = pieces[0].size();
     }
 
     Pieces_Manager(Pieces_Manager &&src) noexcept
@@ -238,6 +270,7 @@ public:
 
         Pieces_Manager tmp(src);
         std::swap(this->pieces, tmp.pieces);
+        std::swap(this->size, tmp.size);
 
         return *this;
     }
@@ -256,18 +289,25 @@ public:
 
     [[nodiscard]] Piece *queen(bool color) { return &pieces[color][1]; }
 
-    [[nodiscard]] Piece *rook(bool color, int which) { return &pieces[color][1 + which]; } // 1 2
-    [[nodiscard]] Piece *bishop(bool color, int which) { return &pieces[color][3 + which]; } // 1 2
-    [[nodiscard]] Piece *knight(bool color, int which) { return &pieces[color][5 + which]; } // 1 2
-    [[nodiscard]] Piece *pawn(const bool color, const int which)
+    [[nodiscard]] Piece *rook(bool color, int which) { return &pieces[color][1 + which]; }
+
+    [[nodiscard]] Piece *bishop(bool color, int which) { return &pieces[color][3 + which]; }
+
+    [[nodiscard]] Piece *knight(bool color, int which) { return &pieces[color][5 + which]; }
+
+    [[nodiscard]] Piece *pawn(bool color, int which) { return (&pieces[color][7 + which]); }
+
+    [[nodiscard]] Piece *extra_piece(bool color, char type, int which)
     {
-        return (&pieces[color][7 + which]);
+        if (type == 'Q') return &pieces[color][16 + (which - 1) * 4];
+        else if (type == 'R') return &pieces[color][17 + (which - 1) * 4];
+        else if (type == 'B') return &pieces[color][18 + (which - 1) * 4];
+        else if (type == 'N') return &pieces[color][19 + (which - 1) * 4];
     }
-    // 1 2 3 4 5 6 7 8
 
-    [[nodiscard]] Piece *piece_number(int which) { return &pieces[which / 16][which % 16]; }
+    [[nodiscard]] Piece *piece_number(int which) { return &pieces[which / size][which % size]; }
 
-    [[nodiscard]] Piece no_ptr_piece_number(int which) const { return pieces[which / 16][which % 16]; }
+    [[nodiscard]] Piece no_ptr_piece_number(int which) const { return pieces[which / size][which % size]; }
 };
 
 class Cell final
@@ -628,9 +668,12 @@ public:
     {
         for (auto &i: board)
             for (auto &j: i)
+            {
+                j.set_unattacked();
                 for (int k = 0; k < 32; k++)
                     if (pieces.piece_number(k)->is_alive())
                         check_attack(*pieces.piece_number(k), j);
+            }
     }
 
     void check_moves(Piece const &piece, std::vector<std::vector<int>> &result)
@@ -733,79 +776,101 @@ public:
     }
 };
 
-void print_board(Position &position)
+class GUI final
 {
-    for (int y = 8; y > 0; y--)
+public:
+    void print_board(Position &position)
     {
-        for (int x = 1; x < 9; x++)
+        for (int y = 8; y > 0; y--)
         {
-            Cell cell(position.get_cell(x, y));
-            if (cell.is_empty())
-                std::cout << '*';
-            else
-                std::cout << cell.get_piece()->get_type();
-        }
-
-        std::cout << std::endl;
-    }
-}
-
-void print_attacks(Position &position)
-{
-    for (int y = 8; y > 0; y--)
-    {
-        for (int x = 1; x < 9; x++)
-        {
-            Cell cell(position.get_cell(x, y));
-            if (cell.is_attacked_by_white())
+            for (int x = 1; x < 9; x++)
             {
-                if (cell.is_attacked_by_black())
-                    std::cout << 'b';
+                Cell cell(position.get_cell(x, y));
+                if (cell.is_empty())
+                    std::cout << '*';
                 else
-                    std::cout << 'W';
+                    std::cout << cell.get_piece()->get_type();
             }
-            else if (cell.is_attacked_by_black())
-                std::cout << 'B';
-            else
-                std::cout << 'n';
+
+            std::cout << std::endl;
+        }
+    }
+
+    void print_attacks(Position &position)
+    {
+        for (int y = 8; y > 0; y--)
+        {
+            for (int x = 1; x < 9; x++)
+            {
+                Cell cell(position.get_cell(x, y));
+                if (cell.is_attacked_by_white())
+                {
+                    if (cell.is_attacked_by_black())
+                        std::cout << 'b';
+                    else
+                        std::cout << 'W';
+                }
+                else if (cell.is_attacked_by_black())
+                    std::cout << 'B';
+                else
+                    std::cout << 'n';
+            }
+
+
+            std::cout << std::endl;
+        }
+    }
+
+    void print_piece_moves(Position &position, Piece &piece)
+    {
+        std::vector<std::vector<int>> res{};
+
+        position.check_moves(piece, res);
+
+        for (auto &re: res)
+        {
+            std::cout << re[0] << ' ' << re[1] << std::endl;
         }
 
+        if (res.empty())
+            std::cout << "NULL";
 
         std::cout << std::endl;
     }
-}
+};
 
-void print_piece_attacks(Position &position, Piece &piece)
+class Game_Manager final
 {
-    std::vector<std::vector<int>> res{};
+private:
+    Position position;
+    GUI interface = GUI();
+public:
 
-    position.check_moves(piece, res);
+    Game_Manager(std::string const position_mode) : position(Position(position_mode)) {};
 
-    for (auto &re: res)
+    void print_board() { interface.print_board(position); }
+
+    void print_attacks()
     {
-        std::cout << re[0] << ' ' << re[1] << std::endl;
+        position.check_attack_all();
+        interface.print_attacks(position);
     }
 
-    if (res.empty())
-        std::cout << "NULL";
-
-    std::cout << std::endl;
-}
+    void print_piece_moves(int number)
+    {
+        interface.print_piece_moves(position, *position.get_pieces().piece_number(number));
+    }
+};
 
 int main()
 {
     std::cout << "Hello, Chess World!" << std::endl;
 
-    Position posi = Position("Q_custom");
+    Game_Manager GM("default");
 
-    print_board(posi);
-
-    posi.check_attack_all();
-    std::cout << std::endl;
-
-    print_attacks(posi);
-
-    print_piece_attacks(posi, *(posi.get_pieces().pawn(true, 1)));
+    GM.print_board();
+    GM.print_attacks();
+    GM.print_piece_moves(9); //Black -> White;KQRRBBNNpppppppp
 
     return 0;
 }
