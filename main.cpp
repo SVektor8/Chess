@@ -744,19 +744,13 @@ public:
     }
 };
 
-int main()
+void print_board(Position &position)
 {
-    std::cout << "Hello, Chess World!" << std::endl;
-
-    //Position posi("default");
-    Position posi = Position("Q_custom");
-    //posi = pos;
-
     for (int y = 8; y > 0; y--)
     {
         for (int x = 1; x < 9; x++)
         {
-            Cell cell(posi.get_cell(x, y));
+            Cell cell(position.get_cell(x, y));
             if (cell.is_empty())
                 std::cout << '*';
             else
@@ -765,24 +759,15 @@ int main()
 
         std::cout << std::endl;
     }
+}
 
-    /*   for (int y = 8; y > 0; y--)
-       {
-           for (int x = 1; x < 9; x++)
-           {
-               Cell cell(posi.get_cell(x, y));
-               std::cout << cell.get_color();
-           }
-
-           std::cout << std::endl;
-       }*/
-    posi.check_attack_all();
-    std::cout << std::endl;
+void print_attacks(Position &position)
+{
     for (int y = 8; y > 0; y--)
     {
         for (int x = 1; x < 9; x++)
         {
-            Cell cell(posi.get_cell(x, y));
+            Cell cell(position.get_cell(x, y));
             if (cell.is_attacked_by_white())
             {
                 if (cell.is_attacked_by_black())
@@ -799,26 +784,39 @@ int main()
 
         std::cout << std::endl;
     }
+}
 
+void print_piece_attacks(Position &position, Piece &piece)
+{
     std::vector<std::vector<int>> res{};
 
-    posi.check_moves(*(posi.get_pieces().pawn(true, 1)), res);
+    position.check_moves(piece, res);
 
     for (auto &re: res)
     {
         std::cout << re[0] << ' ' << re[1] << std::endl;
     }
 
+    if (res.empty())
+        std::cout << "NULL";
+
     std::cout << std::endl;
-/*
-    std::vector<std::vector<int>> res1{};
+}
 
-    posi.check_moves(*(posi.get_pieces().pawn(false, 1)), res1);
+int main()
+{
+    std::cout << "Hello, Chess World!" << std::endl;
 
-    for (auto &i: res1)
-    {
-        std::cout << i[0] << ' ' << i[1] << std::endl;
-    }
-*/
+    Position posi = Position("Q_custom");
+
+    print_board(posi);
+
+    posi.check_attack_all();
+    std::cout << std::endl;
+
+    print_attacks(posi);
+
+    print_piece_attacks(posi, *(posi.get_pieces().pawn(true, 1)));
+
     return 0;
 }
