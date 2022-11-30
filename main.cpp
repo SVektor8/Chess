@@ -445,12 +445,13 @@ public:
                 }
                 else if (mode == "Q_custom")
                 {
-                    //q_custom(pieces.rook(false, 1), i, j, 4, 4);
-                    //q_custom(pieces.pawn(true, 1), i, j, 7, 4);
-                    //q_custom(pieces.king(true), i, j, 8, 4);
+                    q_custom(pieces.rook(false, 1), i, j, 4, 4);
+                    q_custom(pieces.pawn(true, 1), i, j, 7, 4);
+                    q_custom(pieces.king(true), i, j, 8, 4);
+                    q_custom(pieces.king(false), i, j, 2, 8);
                     //q_custom(pieces.queen(true), i, j, 5, 6);
-                    q_custom(pieces.knight(false, 1), i, j, 4, 6);
-                    q_custom(pieces.bishop(true, 1), i, j, 3, 7);
+                    //q_custom(pieces.knight(false, 1), i, j, 4, 6);
+                    //q_custom(pieces.bishop(true, 1), i, j, 3, 7);
                 }
                 else
                 {
@@ -463,7 +464,7 @@ public:
     //TODO write destructor
     ~Position() = default;
 
-    Position(Position const &src)
+    Position(Position const &src) //FIXME
     {
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
@@ -568,15 +569,14 @@ public:
             return false;
     }
 
-    bool check_bound(int x0, int y0, int x1, int y1)
+    bool check_bound(int x0, int y0, int x1, int y1) //Fixme rewrite when other fixme will be ready
     {
-        Position position(*this);
-        bool color = position.get_cell(x0, y0).get_piece()->get_color();
-        position.move_piece(board[y0 - 1][x0 - 1], board[y1 - 1][x1 - 1]);
-        if (position.check_check(color))
-            return true;
-        else
-            return false;
+        bool result;
+        //Position position(*this);
+        bool color = this->get_cell(x0, y0).get_piece()->get_color();
+        this->move_piece(board[y0 - 1][x0 - 1], board[y1 - 1][x1 - 1]);
+        result = (this->check_check(color));
+        this->move_piece(board[y1 - 1][x1 - 1], board[y0 - 1][x0 - 1]);
     }
 
     void q_custom(Piece *piece, int &i, int &j, int p_x, int p_y)
@@ -591,7 +591,7 @@ public:
         int p_x = piece.get_x(), p_y = piece.get_y();
         bool color = piece.get_color();
 
-        if (not(c_x == p_x and (c_y == p_y)))
+        if (not(c_x == p_x and (c_y == p_y))) //and not(check_bound(p_x, p_y, c_x, c_y)))
         {
             if (piece.get_type() == 'p')
             {
@@ -790,7 +790,7 @@ int main()
 
         std::cout << std::endl;
     }
-/*
+
     std::vector<std::vector<int>> res{};
 
     posi.check_moves(*(posi.get_pieces().pawn(true, 1)), res);
@@ -801,7 +801,7 @@ int main()
     }
 
     std::cout << std::endl;
-
+/*
     std::vector<std::vector<int>> res1{};
 
     posi.check_moves(*(posi.get_pieces().pawn(false, 1)), res1);
