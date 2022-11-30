@@ -437,6 +437,18 @@ public:
                             board[i][j].employ(pieces.king(i == 0));
                     }
                 }
+
+                else if (mode == "Q_custom")
+                {
+                    q_custom(pieces.rook(false, 1), i, j, 4, 4);
+                    q_custom(pieces.pawn(true, 1), i, j, 7, 4);
+                    q_custom(pieces.king(true), i, j, 8, 4);
+                }
+
+                else
+                {
+                    std::cout << "no such mode" << std::endl;
+                }
             }
     }
 
@@ -674,6 +686,12 @@ public:
             }
         }
     }
+
+    void q_custom(Piece *piece, int &i, int &j, int p_x, int p_y)
+    {
+        if (i == p_y - 1 and j == p_x - 1)
+            board[i][j].employ(piece);
+    }
 };
 
 int main()
@@ -681,7 +699,7 @@ int main()
     std::cout << "Hello, Chess World!" << std::endl;
 
     //Position posi("default");
-    Position posi = Position("default");
+    Position posi = Position("Q_custom");
     //posi = pos;
 
     for (int y = 8; y > 0; y--)
@@ -698,6 +716,7 @@ int main()
         std::cout << std::endl;
     }
 
+    /*
     for (int y = 8; y > 0; y--)
     {
         for (int x = 1; x < 9; x++)
@@ -750,7 +769,7 @@ int main()
     for (auto &i: res1)
     {
         std::cout << i[0] << ' ' << i[1] << std::endl;
-    }
+    }*/
 
     return 0;
 }
