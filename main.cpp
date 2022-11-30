@@ -548,6 +548,17 @@ public:
             return false;
     }
 
+    bool check_bound(int x0, int y0, int x1, int y1)
+    {
+        Position position(*this);
+        bool color = position.get_cell(x0, y0).get_piece()->get_color();
+        position.move_piece(board[y0 - 1][x0 - 1], board[y1 - 1][x1 - 1]);
+        if (position.check_check(color))
+            return true;
+        else
+            return false;
+    }
+
     void check_attack(Piece const &piece, Cell &cell)
     {
         int c_x = cell.get_x(), c_y = cell.get_y();
@@ -688,6 +699,13 @@ public:
                 }
             }
         }
+    }
+
+    void move_piece(Cell &start, Cell &finish)
+    {
+        Piece *piece = start.get_piece();
+        start.unemploy();
+        finish.employ(piece);
     }
 };
 
