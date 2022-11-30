@@ -533,6 +533,21 @@ public:
         }
     }
 
+    bool check_check(bool color)
+    {
+        int x = pieces.king(color)->get_x();
+        int y = pieces.king(color)->get_y();
+
+        for (int k = 0; k < 32; k++)
+            if (pieces.piece_number(k)->is_alive())
+                check_attack(*pieces.piece_number(k), board[y - 1][x - 1]);
+
+        if (board[y - 1][x - 1].is_attacked_by(not color))
+            return true;
+        else
+            return false;
+    }
+
     void check_attack(Piece const &piece, Cell &cell)
     {
         int c_x = cell.get_x(), c_y = cell.get_y();
