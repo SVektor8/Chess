@@ -5,16 +5,7 @@
 #include <vector>
 
 //TODO pieces moving (probably cycle), showing move ability (where it can move)
-
-void old_add_moves(std::vector<std::vector<int>> &vector, int x, int y)
-{
-    std::vector<int> tmp(2);
-    tmp[0] = x;
-    tmp[1] = y;
-    vector.push_back(tmp);
-}
-
-bool in_board(int x, int y)
+bool is_in_board(int x, int y)
 {
     return (x > 0 and x < 9 and y > 0 and y < 9);
 }
@@ -23,14 +14,14 @@ class Piece
 {
 protected:
     int x = 0, y = 0;
-    bool alive = false, bounded = false, defended = false;
+    bool alive = false, defended = false;
     bool color = true; //true = white, false = black
     char type = 'Z';
 
 public: //TODO ASK does it stay public and the upper code protected?
     Piece() : Piece(true) {}; //TODO ASK explicit
 
-    explicit Piece(bool color) : alive(false), color(color), x(0), y(0), bounded(false), defended(false) {};
+    explicit Piece(bool color) : color(color) {};
 
     [[nodiscard]] int get_x() const { return x; }
 
@@ -42,11 +33,7 @@ public: //TODO ASK does it stay public and the upper code protected?
 
     [[nodiscard]] bool is_alive() const { return alive; }
 
-    [[nodiscard]] bool is_bounded() const { return bounded; }
-
     [[nodiscard]] bool is_defended() const { return defended; }
-
-    void bound() { bounded = true; }
 
     void move(int n_x, int n_y)
     {
@@ -65,7 +52,6 @@ public: //TODO ASK does it stay public and the upper code protected?
         type = src.get_type();
         alive = src.is_alive();
         color = src.get_color();
-        bounded = src.is_bounded();
         defended = src.is_defended();
     }
 
@@ -76,7 +62,6 @@ public: //TODO ASK does it stay public and the upper code protected?
         type = src.get_type();
         alive = src.is_alive();
         color = src.get_color();
-        bounded = src.is_bounded();
         defended = src.is_defended();
     }
 
@@ -90,7 +75,6 @@ public: //TODO ASK does it stay public and the upper code protected?
         std::swap(this->type, tmp.type);
         std::swap(this->alive, tmp.alive);
         std::swap(this->color, tmp.color);
-        std::swap(this->bounded, tmp.bounded);
         std::swap(this->defended, tmp.defended);
 
         return *this;
@@ -106,7 +90,6 @@ public: //TODO ASK does it stay public and the upper code protected?
         std::swap(this->type, tmp.type);
         std::swap(this->alive, tmp.alive);
         std::swap(this->color, tmp.color);
-        std::swap(this->bounded, tmp.bounded);
         std::swap(this->defended, tmp.defended);
 
         return *this;
@@ -126,14 +109,11 @@ class King final : public Piece
 {
 private:
     bool moved;
-    bool checked;
 
 public:
-    explicit King(bool color) : Piece(color), moved(false), checked(false) { type = 'K'; }
+    explicit King(bool color) : Piece(color), moved(false) { type = 'K'; }
 
     [[nodiscard]] bool has_moved() const override { return moved; }
-
-    [[nodiscard]] bool was_checked() const { return checked; }
 };
 
 class Queen final : public Piece
@@ -143,7 +123,6 @@ public:
 
     void move_routine() override
     {
-        bounded = false;
         defended = false;
     }
 };
@@ -159,7 +138,6 @@ public:
 
     void move_routine() override
     {
-        bounded = false;
         defended = false;
     }
 };
@@ -171,7 +149,6 @@ public:
 
     void move_routine() override
     {
-        bounded = false;
         defended = false;
     }
 };
@@ -183,7 +160,6 @@ public:
 
     void move_routine() override
     {
-        bounded = false;
         defended = false;
     }
 };
@@ -199,7 +175,6 @@ public:
 
     void move_routine() override
     {
-        bounded = false;
         defended = false;
     }
 };
@@ -216,7 +191,7 @@ public:
     {
         if (mode == "default")
         {
-            for (int color = 0; color < 2; color++) //TODO ASK help pls...
+            for (int color = 0; color < 2; color++)
             {
                 pieces[color].push_back(King(color));
                 pieces[color].push_back(Queen(color));
@@ -243,13 +218,13 @@ public:
             for (int i = 0; i < 32; i++)
             {
                 if (i < 16)
-                    pieces[0].push_back(src.noptr_piece_number(i));
+                    pieces[0].push_back(src.no_ptr_piece_number(i));
                 else
-                    pieces[1].push_back(src.noptr_piece_number(i));
+                    pieces[1].push_back(src.no_ptr_piece_number(i));
             }
         else
             for (int i = 0; i < 32; i++)
-                pieces[i / 16][i % 16] = src.noptr_piece_number(i);
+                pieces[i / 16][i % 16] = src.no_ptr_piece_number(i);
     }
 
     Pieces_Manager(Pieces_Manager &&src) noexcept
@@ -277,7 +252,8 @@ public:
         return *this;
     }
 
-    [[nodiscard]] Piece *king(bool color) { return &pieces[color][0]; } //TODO ASK
+    [[nodiscard]] Piece *king(bool color) { return &pieces[color][0]; }
+
     [[nodiscard]] Piece *queen(bool color) { return &pieces[color][1]; }
 
     [[nodiscard]] Piece *rook(bool color, int which) { return &pieces[color][1 + which]; } // 1 2
@@ -286,25 +262,25 @@ public:
     [[nodiscard]] Piece *pawn(const bool color, const int which)
     {
         return (&pieces[color][7 + which]);
-    } // 1 2 3 4 5 6 7 8
+    }
+    // 1 2 3 4 5 6 7 8
 
     [[nodiscard]] Piece *piece_number(int which) { return &pieces[which / 16][which % 16]; }
 
-    [[nodiscard]] Piece noptr_piece_number(int which) const { return pieces[which / 16][which % 16]; }
+    [[nodiscard]] Piece no_ptr_piece_number(int which) const { return pieces[which / 16][which % 16]; }
 };
 
 class Cell final
 {
 private:
     int x, y;
-    char vertical;
-    bool empty, black_attacked = false, white_attacked = false;
+    bool empty = true, black_attacked = false, white_attacked = false;
     bool color;
     Piece *piece;
 public:
-    Cell() : x(1), y(1), vertical('a'), empty(true), color(false), piece(nullptr) {};
+    Cell() : x(1), y(1), color(false), piece(nullptr) {};
 
-    Cell(int x, int y) : x(x), y(y), vertical("nabcdefgh"[x]), empty(true), color((x + y) % 2), piece(nullptr) {};
+    Cell(int x, int y) : x(x), y(y), color((x + y) % 2), piece(nullptr) {};
 
     //TODO write destructor
     ~Cell() = default;
@@ -313,7 +289,6 @@ public:
     {
         x = src.get_x();
         y = src.get_y();
-        vertical = src.get_vertical();
         empty = src.is_empty();
         piece = src.get_piece();
         color = src.get_color();
@@ -323,7 +298,13 @@ public:
 
     Cell(Cell &&src) noexcept
     {
-        *this = src;
+        x = src.get_x();
+        y = src.get_y();
+        empty = src.is_empty();
+        piece = src.get_piece();
+        color = src.get_color();
+        white_attacked = src.is_attacked_by_white();
+        black_attacked = src.is_attacked_by_black();
     }
 
     Cell &operator=(Cell const &src)
@@ -333,7 +314,6 @@ public:
         Cell tmp(src);
         std::swap(this->x, tmp.x);
         std::swap(this->y, tmp.y);
-        std::swap(this->vertical, tmp.vertical);
         std::swap(this->empty, tmp.empty);
         std::swap(this->piece, tmp.piece);
         std::swap(this->color, tmp.color);
@@ -358,8 +338,6 @@ public:
     [[nodiscard]] int get_y() const { return y; }
 
     [[nodiscard]] int get_color() const { return color; }
-
-    [[nodiscard]] char get_vertical() const { return vertical; }
 
     [[nodiscard]] Piece *get_piece() const { return piece; }
 
@@ -413,9 +391,9 @@ class Position final
 private:
     Cell board[8][8];
     Pieces_Manager pieces = Pieces_Manager("default");
-    bool move = true, checked = false; // true = white, false = black
+    bool turn = true; // true = white, false = black
 public:
-    //TODO edit constructor for custom positions
+
     explicit Position(const std::string &mode)
     {
         for (int i = 0; i < 8; i++)
@@ -464,8 +442,13 @@ public:
     //TODO write destructor
     ~Position() = default;
 
-    Position(Position const &src) //FIXME
+    Position(Position const &src)
     {
+        /*TODO
+         * Maybe here wil be a problem, because when copying seems, that
+         * board of the new Position object will have pointers on the
+         * pieces of the old position objects, as the Pieces object is
+         * being copied separately. When changed, look at check_move_legality.*/
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
                 board[i][j] = src.get_cell(j + 1, i + 1);
@@ -569,22 +552,17 @@ public:
             return false;
     }
 
-    bool check_bound(int x0, int y0, int x1, int y1) //Fixme rewrite when other fixme will be ready
+    bool check_move_legality(int x0, int y0, int x1, int y1)
     {
+        //TODO in case of problems check Position(Position const &src)
         bool result;
-        //Position position(*this);
         bool color = this->get_cell(x0, y0).get_piece()->get_color();
+
         this->move_piece(board[y0 - 1][x0 - 1], board[y1 - 1][x1 - 1]);
         result = (this->check_check(color));
         this->move_piece(board[y1 - 1][x1 - 1], board[y0 - 1][x0 - 1]);
 
         return result;
-    }
-
-    void q_custom(Piece *piece, int &i, int &j, int p_x, int p_y)
-    {
-        if (i == p_y - 1 and j == p_x - 1)
-            board[i][j].employ(piece);
     }
 
     void check_attack(Piece const &piece, Cell &cell)
@@ -669,7 +647,7 @@ public:
                     if (i != 0 or j != 0)
                     {
                         int x1 = p_x + i, y1 = p_y + j;
-                        if (in_board(x1, y1))
+                        if (is_in_board(x1, y1))
                             if (not board[y1 - 1][x1 - 1].is_attacked_by(not color)
                                 and (board[y1 - 1][x1 - 1].is_empty()
                                      || board[y1 - 1][x1 - 1].can_be_taken(color)
@@ -688,7 +666,7 @@ public:
                     if (not piece.has_moved())
                     {
                         int x1 = p_x, y1 = p_y + 2;
-                        if (board[y1 - 1][x1 - 1].is_empty())//and not(check_bound(p_x, p_y, c_x, c_y)))
+                        if (board[y1 - 1][x1 - 1].is_empty())//and not(check_move_legality(p_x, p_y, c_x, c_y)))
 
                             add_moves(result, p_x, p_y, x1, y1);
                     }
@@ -730,6 +708,17 @@ public:
         }
     }
 
+    void add_moves(std::vector<std::vector<int>> &vector, int p_x, int p_y, int x, int y)
+    {
+        if (not(check_move_legality(p_x, p_y, x, y)))
+        {
+            std::vector<int> tmp(2);
+            tmp[0] = x;
+            tmp[1] = y;
+            vector.push_back(tmp);
+        }
+    }
+
     void move_piece(Cell &start, Cell &finish)
     {
         Piece *piece = start.get_piece();
@@ -737,10 +726,10 @@ public:
         finish.employ(piece);
     }
 
-    void add_moves(std::vector<std::vector<int>> &vector, int p_x, int p_y, int x, int y)
+    void q_custom(Piece *piece, int &i, int &j, int p_x, int p_y)
     {
-        if (not(check_bound(p_x, p_y, x, y)))
-            old_add_moves(vector, x, y);
+        if (i == p_y - 1 and j == p_x - 1)
+            board[i][j].employ(piece);
     }
 };
 
