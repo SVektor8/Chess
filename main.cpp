@@ -114,7 +114,7 @@ public: //TODO ASK does it stay public and the upper code protected?
 
     virtual void move_routine() {};
 
-    [[nodiscard]] virtual bool has_moved() const { return false;}
+    [[nodiscard]] virtual bool has_moved() const { return false; }
 
 };
 
@@ -594,8 +594,8 @@ public:
 
     void check_attack_all()
     {
-        for (auto & i : board)
-            for (auto & j : i)
+        for (auto &i: board)
+            for (auto &j: i)
                 for (int k = 0; k < 32; k++)
                     if (pieces.piece_number(k)->is_alive())
                         check_attack(*pieces.piece_number(k), j);
@@ -736,7 +736,7 @@ int main()
 
     posi.check_moves(*(posi.get_pieces().pawn(true, 1)), res);
 
-    for (auto & re : res)
+    for (auto &re: res)
     {
         std::cout << re[0] << ' ' << re[1] << std::endl;
     }
@@ -747,7 +747,7 @@ int main()
 
     posi.check_moves(*(posi.get_pieces().pawn(false, 1)), res1);
 
-    for (auto & i : res1)
+    for (auto &i: res1)
     {
         std::cout << i[0] << ' ' << i[1] << std::endl;
     }
