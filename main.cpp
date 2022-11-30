@@ -23,14 +23,14 @@ class Piece
 {
 protected:
     int x = 0, y = 0;
-    bool alive = true, bounded = false, defended = false;
+    bool alive = false, bounded = false, defended = false;
     bool color = true; //true = white, false = black
     char type = 'Z';
 
 public: //TODO ASK does it stay public and the upper code protected?
     Piece() : Piece(true) {}; //TODO ASK explicit
 
-    explicit Piece(bool color) : alive(true), color(color), x(0), y(0), bounded(false), defended(false) {};
+    explicit Piece(bool color) : alive(false), color(color), x(0), y(0), bounded(false), defended(false) {};
 
     [[nodiscard]] int get_x() const { return x; }
 
@@ -115,6 +115,10 @@ public: //TODO ASK does it stay public and the upper code protected?
     virtual void move_routine() {};
 
     [[nodiscard]] virtual bool has_moved() const { return false; }
+
+    void die() { alive = false; }
+
+    void respawn() { alive = true; }
 
 };
 
@@ -394,11 +398,13 @@ public:
         piece = p;
         empty = false;
         piece->move(x, y);
+        piece->respawn();
     }
 
     void unemploy()
     {
         empty = true;
+        piece->die();
     }
 };
 
@@ -437,6 +443,20 @@ public:
                             board[i][j].employ(pieces.king(i == 0));
                     }
                 }
+                else if (mode == "Q_custom")
+                {
+                    //q_custom(pieces.rook(false, 1), i, j, 4, 4);
+                    //q_custom(pieces.pawn(true, 1), i, j, 7, 4);
+                    //q_custom(pieces.king(true), i, j, 8, 4);
+                    //q_custom(pieces.queen(true), i, j, 5, 6);
+                    q_custom(pieces.knight(false, 1), i, j, 4, 6);
+                    q_custom(pieces.bishop(true, 1), i, j, 3, 7);
+                }
+                else
+                {
+                    std::cout << "no such mode" << std::endl;
+                }
+
             }
     }
 
@@ -557,6 +577,12 @@ public:
             return true;
         else
             return false;
+    }
+
+    void q_custom(Piece *piece, int &i, int &j, int p_x, int p_y)
+    {
+        if (i == p_y - 1 and j == p_x - 1)
+            board[i][j].employ(piece);
     }
 
     void check_attack(Piece const &piece, Cell &cell)
@@ -714,7 +740,7 @@ int main()
     std::cout << "Hello, Chess World!" << std::endl;
 
     //Position posi("default");
-    Position posi = Position("default");
+    Position posi = Position("Q_custom");
     //posi = pos;
 
     for (int y = 8; y > 0; y--)
@@ -731,7 +757,7 @@ int main()
         std::cout << std::endl;
     }
 
-    for (int y = 8; y > 0; y--)
+ /*   for (int y = 8; y > 0; y--)
     {
         for (int x = 1; x < 9; x++)
         {
@@ -740,7 +766,7 @@ int main()
         }
 
         std::cout << std::endl;
-    }
+    }*/
     posi.check_attack_all();
     std::cout << std::endl;
     for (int y = 8; y > 0; y--)
@@ -764,7 +790,7 @@ int main()
 
         std::cout << std::endl;
     }
-
+/*
     std::vector<std::vector<int>> res{};
 
     posi.check_moves(*(posi.get_pieces().pawn(true, 1)), res);
@@ -784,6 +810,6 @@ int main()
     {
         std::cout << i[0] << ' ' << i[1] << std::endl;
     }
-
+*/
     return 0;
 }
