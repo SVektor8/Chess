@@ -6,7 +6,7 @@
 
 //TODO pieces moving (probably cycle), showing move ability (where it can move)
 
-void add_moves(std::vector<std::vector<int>> &vector, int x, int y)
+void old_add_moves(std::vector<std::vector<int>> &vector, int x, int y)
 {
     std::vector<int> tmp(2);
     tmp[0] = x;
@@ -116,9 +116,9 @@ public: //TODO ASK does it stay public and the upper code protected?
 
     [[nodiscard]] virtual bool has_moved() const { return false; }
 
-    void die() {alive = false;}
+    void die() { alive = false; }
 
-    void respawn() {alive = true;}
+    void respawn() { alive = true; }
 
 };
 
@@ -443,28 +443,28 @@ public:
                             board[i][j].employ(pieces.king(i == 0));
                     }
                 }
-
                 else if (mode == "Q_custom")
                 {
-                    //q_custom(pieces.rook(false, 1), i, j, 4, 4);
-                    //q_custom(pieces.pawn(true, 1), i, j, 7, 4);
-                    //q_custom(pieces.king(true), i, j, 8, 4);
+                    q_custom(pieces.rook(false, 1), i, j, 4, 4);
+                    q_custom(pieces.pawn(true, 1), i, j, 7, 4);
+                    q_custom(pieces.king(true), i, j, 8, 4);
+                    q_custom(pieces.king(false), i, j, 2, 8);
                     //q_custom(pieces.queen(true), i, j, 5, 6);
-                    q_custom(pieces.knight(false, 1), i, j, 4, 6);
-                    q_custom(pieces.bishop(true, 1), i, j, 3, 7);
+                    //q_custom(pieces.knight(false, 1), i, j, 4, 6);
+                    //q_custom(pieces.bishop(true, 1), i, j, 3, 7);
                 }
-
                 else
                 {
                     std::cout << "no such mode" << std::endl;
                 }
+
             }
     }
 
     //TODO write destructor
     ~Position() = default;
 
-    Position(Position const &src)
+    Position(Position const &src) //FIXME
     {
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
@@ -554,13 +554,46 @@ public:
         }
     }
 
+    bool check_check(bool color)
+    {
+        int x = pieces.king(color)->get_x();
+        int y = pieces.king(color)->get_y();
+
+        for (int k = 0; k < 32; k++)
+            if (pieces.piece_number(k)->is_alive())
+                check_attack(*pieces.piece_number(k), board[y - 1][x - 1]);
+
+        if (board[y - 1][x - 1].is_attacked_by(not color))
+            return true;
+        else
+            return false;
+    }
+
+    bool check_bound(int x0, int y0, int x1, int y1) //Fixme rewrite when other fixme will be ready
+    {
+        bool result;
+        //Position position(*this);
+        bool color = this->get_cell(x0, y0).get_piece()->get_color();
+        this->move_piece(board[y0 - 1][x0 - 1], board[y1 - 1][x1 - 1]);
+        result = (this->check_check(color));
+        this->move_piece(board[y1 - 1][x1 - 1], board[y0 - 1][x0 - 1]);
+
+        return result;
+    }
+
+    void q_custom(Piece *piece, int &i, int &j, int p_x, int p_y)
+    {
+        if (i == p_y - 1 and j == p_x - 1)
+            board[i][j].employ(piece);
+    }
+
     void check_attack(Piece const &piece, Cell &cell)
     {
         int c_x = cell.get_x(), c_y = cell.get_y();
         int p_x = piece.get_x(), p_y = piece.get_y();
         bool color = piece.get_color();
 
-        if (piece.is_alive() and not(c_x == p_x and (c_y == p_y)))
+        if (not(c_x == p_x and (c_y == p_y)))
         {
             if (piece.get_type() == 'p')
             {
@@ -642,7 +675,7 @@ public:
                                      || board[y1 - 1][x1 - 1].can_be_taken(color)
                                         and not board[y1 - 1][x1 - 1].get_piece()->is_defended()))
                             {
-                                add_moves(result, x1, y1);
+                                add_moves(result, p_x, p_y, x1, y1);
                             }
                     }
         }
@@ -655,20 +688,21 @@ public:
                     if (not piece.has_moved())
                     {
                         int x1 = p_x, y1 = p_y + 2;
-                        if (board[y1 - 1][x1 - 1].is_empty())
-                            add_moves(result, x1, y1);
+                        if (board[y1 - 1][x1 - 1].is_empty())//and not(check_bound(p_x, p_y, c_x, c_y)))
+
+                            add_moves(result, p_x, p_y, x1, y1);
                     }
                     {
                         int x1 = p_x, y1 = p_y + 1;
                         if (board[y1 - 1][x1 - 1].is_empty())
-                            add_moves(result, x1, y1);
+                            add_moves(result, p_x, p_y, x1, y1);
                     }
                     for (int i = -1; i < 2; i += 2)
                     {
                         int x1 = p_x + 1, y1 = p_y + 1;
                         if ((not board[y1 - 1][x1 - 1].is_empty()) &&
                             board[y1 - 1][x1 - 1].can_be_taken(color))
-                            add_moves(result, x1, y1);
+                            add_moves(result, p_x, p_y, x1, y1);
                     }
                 }
                 else
@@ -677,29 +711,36 @@ public:
                     {
                         int x1 = p_x, y1 = p_y - 2;
                         if (board[y1 - 1][x1 - 1].is_empty())
-                            add_moves(result, x1, y1);
+                            add_moves(result, p_x, p_y, x1, y1);
                     }
                     {
                         int x1 = p_x, y1 = p_y - 1;
                         if (board[y1 - 1][x1 - 1].is_empty())
-                            add_moves(result, x1, y1);
+                            add_moves(result, p_x, p_y, x1, y1);
                     }
                     for (int i = -1; i < 2; i += 2)
                     {
                         int x1 = p_x + i, y1 = p_y - 1;
                         if ((not board[y1 - 1][x1 - 1].is_empty()) &&
                             board[y1 - 1][x1 - 1].can_be_taken(color))
-                            add_moves(result, x1, y1);
+                            add_moves(result, p_x, p_y, x1, y1);
                     }
                 }
             }
         }
     }
 
-    void q_custom(Piece *piece, int &i, int &j, int p_x, int p_y)
+    void move_piece(Cell &start, Cell &finish)
     {
-        if (i == p_y - 1 and j == p_x - 1)
-            board[i][j].employ(piece);
+        Piece *piece = start.get_piece();
+        start.unemploy();
+        finish.employ(piece);
+    }
+
+    void add_moves(std::vector<std::vector<int>> &vector, int p_x, int p_y, int x, int y)
+    {
+        if (not(check_bound(p_x, p_y, x, y)))
+            old_add_moves(vector, x, y);
     }
 };
 
@@ -725,17 +766,16 @@ int main()
         std::cout << std::endl;
     }
 
-    /*
-    for (int y = 8; y > 0; y--)
-    {
-        for (int x = 1; x < 9; x++)
-        {
-            Cell cell(posi.get_cell(x, y));
-            std::cout << cell.get_color();
-        }
+    /*   for (int y = 8; y > 0; y--)
+       {
+           for (int x = 1; x < 9; x++)
+           {
+               Cell cell(posi.get_cell(x, y));
+               std::cout << cell.get_color();
+           }
 
-        std::cout << std::endl;
-    }*/
+           std::cout << std::endl;
+       }*/
     posi.check_attack_all();
     std::cout << std::endl;
     for (int y = 8; y > 0; y--)
@@ -759,7 +799,7 @@ int main()
 
         std::cout << std::endl;
     }
-/*
+
     std::vector<std::vector<int>> res{};
 
     posi.check_moves(*(posi.get_pieces().pawn(true, 1)), res);
@@ -770,7 +810,7 @@ int main()
     }
 
     std::cout << std::endl;
-
+/*
     std::vector<std::vector<int>> res1{};
 
     posi.check_moves(*(posi.get_pieces().pawn(false, 1)), res1);
@@ -778,7 +818,7 @@ int main()
     for (auto &i: res1)
     {
         std::cout << i[0] << ' ' << i[1] << std::endl;
-    }*/
-
+    }
+*/
     return 0;
 }
