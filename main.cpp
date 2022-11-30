@@ -6,7 +6,7 @@
 
 //TODO pieces moving (probably cycle), showing move ability (where it can move)
 
-void add_moves(std::vector<std::vector<int>> &vector, int x, int y)
+void old_add_moves(std::vector<std::vector<int>> &vector, int x, int y)
 {
     std::vector<int> tmp(2);
     tmp[0] = x;
@@ -577,6 +577,8 @@ public:
         this->move_piece(board[y0 - 1][x0 - 1], board[y1 - 1][x1 - 1]);
         result = (this->check_check(color));
         this->move_piece(board[y1 - 1][x1 - 1], board[y0 - 1][x0 - 1]);
+
+        return result;
     }
 
     void q_custom(Piece *piece, int &i, int &j, int p_x, int p_y)
@@ -591,7 +593,7 @@ public:
         int p_x = piece.get_x(), p_y = piece.get_y();
         bool color = piece.get_color();
 
-        if (not(c_x == p_x and (c_y == p_y))) //and not(check_bound(p_x, p_y, c_x, c_y)))
+        if (not(c_x == p_x and (c_y == p_y)))
         {
             if (piece.get_type() == 'p')
             {
@@ -673,7 +675,7 @@ public:
                                      || board[y1 - 1][x1 - 1].can_be_taken(color)
                                         and not board[y1 - 1][x1 - 1].get_piece()->is_defended()))
                             {
-                                add_moves(result, x1, y1);
+                                add_moves(result, p_x, p_y, x1, y1);
                             }
                     }
         }
@@ -686,20 +688,21 @@ public:
                     if (not piece.has_moved())
                     {
                         int x1 = p_x, y1 = p_y + 2;
-                        if (board[y1 - 1][x1 - 1].is_empty())
-                            add_moves(result, x1, y1);
+                        if (board[y1 - 1][x1 - 1].is_empty())//and not(check_bound(p_x, p_y, c_x, c_y)))
+
+                            add_moves(result, p_x, p_y, x1, y1);
                     }
                     {
                         int x1 = p_x, y1 = p_y + 1;
                         if (board[y1 - 1][x1 - 1].is_empty())
-                            add_moves(result, x1, y1);
+                            add_moves(result, p_x, p_y, x1, y1);
                     }
                     for (int i = -1; i < 2; i += 2)
                     {
                         int x1 = p_x + 1, y1 = p_y + 1;
                         if ((not board[y1 - 1][x1 - 1].is_empty()) &&
                             board[y1 - 1][x1 - 1].can_be_taken(color))
-                            add_moves(result, x1, y1);
+                            add_moves(result, p_x, p_y, x1, y1);
                     }
                 }
                 else
@@ -708,19 +711,19 @@ public:
                     {
                         int x1 = p_x, y1 = p_y - 2;
                         if (board[y1 - 1][x1 - 1].is_empty())
-                            add_moves(result, x1, y1);
+                            add_moves(result, p_x, p_y, x1, y1);
                     }
                     {
                         int x1 = p_x, y1 = p_y - 1;
                         if (board[y1 - 1][x1 - 1].is_empty())
-                            add_moves(result, x1, y1);
+                            add_moves(result, p_x, p_y, x1, y1);
                     }
                     for (int i = -1; i < 2; i += 2)
                     {
                         int x1 = p_x + i, y1 = p_y - 1;
                         if ((not board[y1 - 1][x1 - 1].is_empty()) &&
                             board[y1 - 1][x1 - 1].can_be_taken(color))
-                            add_moves(result, x1, y1);
+                            add_moves(result, p_x, p_y, x1, y1);
                     }
                 }
             }
@@ -732,6 +735,12 @@ public:
         Piece *piece = start.get_piece();
         start.unemploy();
         finish.employ(piece);
+    }
+
+    void add_moves(std::vector<std::vector<int>> &vector, int p_x, int p_y, int x, int y)
+    {
+        if (not(check_bound(p_x, p_y, x, y)))
+            old_add_moves(vector, x, y);
     }
 };
 
@@ -757,16 +766,16 @@ int main()
         std::cout << std::endl;
     }
 
- /*   for (int y = 8; y > 0; y--)
-    {
-        for (int x = 1; x < 9; x++)
-        {
-            Cell cell(posi.get_cell(x, y));
-            std::cout << cell.get_color();
-        }
+    /*   for (int y = 8; y > 0; y--)
+       {
+           for (int x = 1; x < 9; x++)
+           {
+               Cell cell(posi.get_cell(x, y));
+               std::cout << cell.get_color();
+           }
 
-        std::cout << std::endl;
-    }*/
+           std::cout << std::endl;
+       }*/
     posi.check_attack_all();
     std::cout << std::endl;
     for (int y = 8; y > 0; y--)
