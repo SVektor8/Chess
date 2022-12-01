@@ -690,70 +690,74 @@ public:
                     if (i != 0 or j != 0)
                     {
                         int x1 = p_x + i, y1 = p_y + j;
-                        if (is_in_board(x1, y1))
-                            if (not board[y1 - 1][x1 - 1].is_attacked_by(not color)
-                                and (board[y1 - 1][x1 - 1].is_empty()
-                                     || board[y1 - 1][x1 - 1].can_be_taken(color)
-                                        and not board[y1 - 1][x1 - 1].get_piece()->is_defended()))
                             {
                                 add_moves(result, p_x, p_y, x1, y1);
                             }
                     }
         }
-        else
+        else if (type == 'p')
         {
-            if (type == 'p')
+            if (color)
             {
-                if (color)
+                if (not piece.has_moved())
                 {
-                    if (not piece.has_moved())
-                    {
-                        int x1 = p_x, y1 = p_y + 2;
-                        if (board[y1 - 1][x1 - 1].is_empty())//and not(check_move_legality(p_x, p_y, c_x, c_y)))
+                    int x1 = p_x, y1 = p_y + 2;
+                    if (board[y1 - 1][x1 - 1].is_empty())
 
-                            add_moves(result, p_x, p_y, x1, y1);
-                    }
-                    {
-                        int x1 = p_x, y1 = p_y + 1;
-                        if (board[y1 - 1][x1 - 1].is_empty())
-                            add_moves(result, p_x, p_y, x1, y1);
-                    }
-                    for (int i = -1; i < 2; i += 2)
-                    {
-                        int x1 = p_x + 1, y1 = p_y + 1;
-                        if ((not board[y1 - 1][x1 - 1].is_empty()) &&
-                            board[y1 - 1][x1 - 1].can_be_taken(color))
-                            add_moves(result, p_x, p_y, x1, y1);
-                    }
+                        add_moves(result, p_x, p_y, x1, y1);
                 }
-                else
                 {
-                    if (not piece.has_moved())
-                    {
-                        int x1 = p_x, y1 = p_y - 2;
-                        if (board[y1 - 1][x1 - 1].is_empty())
-                            add_moves(result, p_x, p_y, x1, y1);
-                    }
-                    {
-                        int x1 = p_x, y1 = p_y - 1;
-                        if (board[y1 - 1][x1 - 1].is_empty())
-                            add_moves(result, p_x, p_y, x1, y1);
-                    }
-                    for (int i = -1; i < 2; i += 2)
-                    {
-                        int x1 = p_x + i, y1 = p_y - 1;
-                        if ((not board[y1 - 1][x1 - 1].is_empty()) &&
-                            board[y1 - 1][x1 - 1].can_be_taken(color))
-                            add_moves(result, p_x, p_y, x1, y1);
-                    }
+                    int x1 = p_x, y1 = p_y + 1;
+                    if (board[y1 - 1][x1 - 1].is_empty())
+                        add_moves(result, p_x, p_y, x1, y1);
                 }
+                for (int i = -1; i < 2; i += 2)
+                {
+                    int x1 = p_x + 1, y1 = p_y + 1;
+                    if ((not board[y1 - 1][x1 - 1].is_empty()) &&
+                        board[y1 - 1][x1 - 1].can_be_taken(color))
+                        add_moves(result, p_x, p_y, x1, y1);
+                }
+            }
+            else
+            {
+                if (not piece.has_moved())
+                {
+                    int x1 = p_x, y1 = p_y - 2;
+                    if (board[y1 - 1][x1 - 1].is_empty())
+                        add_moves(result, p_x, p_y, x1, y1);
+                }
+                {
+                    int x1 = p_x, y1 = p_y - 1;
+                    if (board[y1 - 1][x1 - 1].is_empty())
+                        add_moves(result, p_x, p_y, x1, y1);
+                }
+                for (int i = -1; i < 2; i += 2)
+                {
+                    int x1 = p_x + i, y1 = p_y - 1;
+                    if ((not board[y1 - 1][x1 - 1].is_empty()) &&
+                        board[y1 - 1][x1 - 1].can_be_taken(color))
+                        add_moves(result, p_x, p_y, x1, y1);
+                }
+            }
+        }
+        else if (type == 'N')
+        {
+            int vars[8][2] = {{1, 2}, {-1, 2}, {1, -2}, {-1, -2},
+                              {2, 1}, {-2, 1}, {2, -1}, {-2, -1}};
+            for (int i = 0; i < 8; i++)
+            {
+                int x1 = p_x + vars[i][0];
+                int y1 = p_y + vars[i][0];
+
+                add_moves(result, p_x, p_y, x1, y1);
             }
         }
     }
 
     void add_moves(std::vector<std::vector<int>> &vector, int p_x, int p_y, int x, int y)
-    {
-        if (not(check_move_legality(p_x, p_y, x, y)))
+    { //TODO add here can_be_taken
+        if (not(check_move_legality(p_x, p_y, x, y)) and is_in_board(x, y))
         {
             std::vector<int> tmp(2);
             tmp[0] = x;
