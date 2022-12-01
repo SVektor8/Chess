@@ -682,20 +682,9 @@ public:
         int p_y = piece.get_y();
         int color = piece.get_color();
         char type = piece.get_type();
+        std::vector<std::vector<int>> vars;
         //TODO add castling
-        if (type == 'K')
-        {
-            for (int i = -1; i < 2; i++)
-                for (int j = -1; j < 2; j++)
-                    if (i != 0 or j != 0)
-                    {
-                        int x1 = p_x + i, y1 = p_y + j;
-                        {
-                            add_moves(result, p_x, p_y, x1, y1);
-                        }
-                    }
-        }
-        else if (type == 'p')
+        if (type == 'p')
         {
             if (color)
             {
@@ -741,16 +730,45 @@ public:
                 }
             }
         }
-        else if (type == 'N')
+        else
         {
-            int vars[8][2] = {{1,  2},
-                              {-1, 2},
-                              {1,  -2},
-                              {-1, -2},
-                              {2,  1},
-                              {-2, 1},
-                              {2,  -1},
-                              {-2, -1}};
+            if (type == 'K')
+            {
+                vars = {{1,  1},
+                        {1,  0},
+                        {1,  -1},
+                        {0,  -1},
+                        {-1, -1},
+                        {-1, 0},
+                        {-1, 1},
+                        {0,  1}};
+            }
+            else if (type == 'N')
+            {
+                vars = {{1,  2},
+                        {-1, 2},
+                        {1,  -2},
+                        {-1, -2},
+                        {2,  1},
+                        {-2, 1},
+                        {2,  -1},
+                        {-2, -1}};
+            }
+            else if (type == 'B')//TODO test
+            {
+                for (int i = 1; i < 9 - p_x; i++)
+                {
+                    std::vector<int> tmp = {p_x + i, p_y + i};
+                    vars.push_back(tmp);
+                    tmp = {p_x + i, p_y - i};
+                }
+                for (int i = 1; i < p_x; i++)
+                {
+                    std::vector<int> tmp = {p_x - i, p_y + i};
+                    vars.push_back(tmp);
+                    tmp = {p_x - i, p_y - i};
+                }
+            }
 
             for (auto &var: vars)
             {
