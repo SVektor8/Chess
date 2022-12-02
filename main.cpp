@@ -732,7 +732,24 @@ public:
         }
         else
         {
-            
+            for (int x = 1; x < 9; x++)
+                for (int y = 1; y < 9; y++)
+                {//TODO rewrite both this and check_attack
+                    bool black = board[y - 1][x - 1].is_attacked_by_black();
+                    bool white = board[y - 1][x - 1].is_attacked_by_white();
+                    board[y - 1][x - 1].set_unattacked();
+                    check_attack(piece, board[y - 1][x - 1]);
+                    if (board[y - 1][x - 1].is_attacked_by(color))
+                    {
+                        std::vector tmp{x, y};
+                        vars.push_back(tmp);
+                    }
+                    board[y - 1][x - 1].set_unattacked();
+                    if (black)
+                        board[y - 1][x - 1].set_attacked(false);
+                    if (white)
+                        board[y - 1][x - 1].set_attacked(true);
+                }
 
             for (auto &var: vars)
             {
