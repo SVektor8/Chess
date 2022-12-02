@@ -463,13 +463,13 @@ public:
                 }
                 else if (mode == "Q_custom")
                 {
-                    q_custom(pieces.rook(false, 1), i, j, 4, 4);
-                    q_custom(pieces.pawn(true, 1), i, j, 7, 4);
-                    q_custom(pieces.king(true), i, j, 8, 4);
-                    q_custom(pieces.king(false), i, j, 2, 8);
-                    //q_custom(pieces.queen(true), i, j, 5, 6);
-                    //q_custom(pieces.knight(false, 1), i, j, 4, 6);
-                    //q_custom(pieces.bishop(true, 1), i, j, 3, 7);
+                    //q_custom(pieces.rook(false, 1), i, j, 4, 4);
+                    //q_custom(pieces.pawn(false, 1), i, j, 4, 7);
+                    q_custom(pieces.king(false), i, j, 8, 7);
+                    //q_custom(pieces.king(false), i, j, 2, 8);
+                    //q_custom(pieces.queen(false), i, j, 4, 4);
+                    //q_custom(pieces.knight(false, 1), i, j, 4, 4);
+                    //q_custom(pieces.bishop(false, 1), i, j, 4, 4);
                 }
                 else
                 {
@@ -684,6 +684,8 @@ public:
         char type = piece.get_type();
         std::vector<std::vector<int>> vars;
         //TODO add castling
+        if (not piece.is_alive())
+            return;
         if (type == 'p')
         {
             if (color)
@@ -732,59 +734,28 @@ public:
         }
         else
         {
-            if (type == 'K')
-            {
-                vars = {{1,  1},
-                        {1,  0},
-                        {1,  -1},
-                        {0,  -1},
-                        {-1, -1},
-                        {-1, 0},
-                        {-1, 1},
-                        {0,  1}};
-            }
-            else if (type == 'N')
-            {
-                vars = {{1,  2},
-                        {-1, 2},
-                        {1,  -2},
-                        {-1, -2},
-                        {2,  1},
-                        {-2, 1},
-                        {2,  -1},
-                        {-2, -1}};
-            }
-            else if (type == 'B')
-            {//TODO test
-                for (int i = 1; i < 9 - p_x; i++)
-                {
-                    std::vector<int> tmp = {p_x + i, p_y + i};
-                    vars.push_back(tmp);
+            for (int x = 1; x < 9; x++)
+                for (int y = 1; y < 9; y++)
+                {//TODO rewrite both this and check_attack
+                    bool black = board[y - 1][x - 1].is_attacked_by_black();
+                    bool white = board[y - 1][x - 1].is_attacked_by_white();
+                    board[y - 1][x - 1].set_unattacked();
+                    check_attack(piece, board[y - 1][x - 1]);
+                    if (board[y - 1][x - 1].is_attacked_by(color))
+                    {
+                        std::vector tmp{x, y};
+                        vars.push_back(tmp);
+                    }
+                    board[y - 1][x - 1].set_unattacked();
+                    if (black)
+                        board[y - 1][x - 1].set_attacked(false);
+                    if (white)
+                        board[y - 1][x - 1].set_attacked(true);
                 }
-                for (int i = 1; i < 9 - p_x; i++)
-                {
-                    std::vector<int> tmp = {p_x + i, p_y - i};
-                    vars.push_back(tmp);
-                }
-                for (int i = 1; i < p_x; i++)
-                {
-                    std::vector<int> tmp = {p_x - i, p_y + i};
-                    vars.push_back(tmp);
-                    tmp = {p_x - i, p_y - i};
-                    vars.push_back(tmp);
-                }
-            }
-            else if (type == 'R')
-            {
-                //for (int i = 1; i<9; i++)
-            }
 
             for (auto &var: vars)
             {
-                int x1 = p_x + var[0];
-                int y1 = p_y + var[0];
-
-                add_moves(result, p_x, p_y, x1, y1);
+                add_moves(result, p_x, p_y, var[0], var[1]);
             }
         }
         //Fixme try set for different pieces different vars and then for all try it in cycle
@@ -908,11 +879,11 @@ int main()
 {
     std::cout << "Hello, Chess World!" << std::endl;
 
-    Game_Manager GM("default");
+    Game_Manager GM("Q_custom");
 
     GM.print_board();
     GM.print_attacks();
-    GM.print_piece_moves(9); //Black -> White;KQRRBBNNpppppppp
+    GM.print_piece_moves(0); //Black -> White;KQRRBBNNpppppppp
 
     return 0;
 }
