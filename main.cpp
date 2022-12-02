@@ -732,43 +732,7 @@ public:
         }
         else
         {
-            if (type == 'K')
-            {
-                vars = {{1,  1},
-                        {1,  0},
-                        {1,  -1},
-                        {0,  -1},
-                        {-1, -1},
-                        {-1, 0},
-                        {-1, 1},
-                        {0,  1}};
-            }
-            else if (type == 'N')
-            {
-                vars = {{1,  2},
-                        {-1, 2},
-                        {1,  -2},
-                        {-1, -2},
-                        {2,  1},
-                        {-2, 1},
-                        {2,  -1},
-                        {-2, -1}};
-            }
-            else if (type == 'B')//TODO test
-            {
-                for (int i = 1; i < 9 - p_x; i++)
-                {
-                    std::vector<int> tmp = {p_x + i, p_y + i};
-                    vars.push_back(tmp);
-                    tmp = {p_x + i, p_y - i};
-                }
-                for (int i = 1; i < p_x; i++)
-                {
-                    std::vector<int> tmp = {p_x - i, p_y + i};
-                    vars.push_back(tmp);
-                    tmp = {p_x - i, p_y - i};
-                }
-            }
+            
 
             for (auto &var: vars)
             {
