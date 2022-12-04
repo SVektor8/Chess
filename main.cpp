@@ -16,7 +16,7 @@ class Piece
 {
 protected:
     int x = 0, y = 0;
-    bool alive = false, defended = false;
+    bool alive = false, defended = false, moved = false;
     bool color = true; //true = white, false = black
     bool chosen = false;
     char type = 'Z';
@@ -63,6 +63,7 @@ public: //TODO ASK does it stay public and the upper code protected?
         color = src.get_color();
         defended = src.is_defended();
         chosen = src.is_chosen();
+        moved = src.has_moved();
     }
 
     Piece(Piece &&src) noexcept
@@ -74,6 +75,7 @@ public: //TODO ASK does it stay public and the upper code protected?
         color = src.get_color();
         defended = src.is_defended();
         chosen = src.is_chosen();
+        moved = src.has_moved();
     }
 
     Piece &operator=(Piece const &src)
@@ -88,6 +90,7 @@ public: //TODO ASK does it stay public and the upper code protected?
         std::swap(this->color, tmp.color);
         std::swap(this->defended, tmp.defended);
         std::swap(this->chosen, tmp.chosen);
+        std::swap(this->moved, tmp.moved);
 
         return *this;
     }
@@ -104,13 +107,16 @@ public: //TODO ASK does it stay public and the upper code protected?
         std::swap(this->color, tmp.color);
         std::swap(this->defended, tmp.defended);
         std::swap(this->chosen, tmp.chosen);
+        std::swap(this->moved, tmp.moved);
 
         return *this;
     }
 
     virtual void move_routine() {};
 
-    [[nodiscard]] virtual bool has_moved() const { return false; }
+    [[nodiscard]] virtual bool has_moved() const { return moved; }
+
+    virtual void set_moved() { moved = true; }
 
     void die() { alive = false; }
 
@@ -185,6 +191,8 @@ public:
     explicit Pawn(bool color) : Piece(color), moved(false) { type = 'p'; } //TODO ASK why cannot write x(X)
 
     [[nodiscard]] bool has_moved() const override { return moved; }
+
+    void set_moved() override { moved = true; }
 
     void move_routine() override
     {
@@ -436,6 +444,7 @@ public:
     {
         empty = true;
         piece->die();
+        piece = nullptr;
     }
 };
 
@@ -505,7 +514,7 @@ public:
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
                 board[i][j] = (src.no_ptr_get_cell(j + 1, i + 1));
-        pieces = src.get_pieces();
+        pieces = src.no_ptr_get_pieces();
     }
 
     Position(Position &&src) noexcept
@@ -513,7 +522,7 @@ public:
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
                 board[i][j] = *src.get_cell(j + 1, i + 1);
-        pieces = src.get_pieces();
+        pieces = *src.get_pieces();
     }
 
     Position &operator=(Position const &src)
@@ -548,7 +557,8 @@ public:
         return board[y - 1][x - 1];
     }
 
-    [[nodiscard]] Pieces_Manager get_pieces() const { return pieces; }
+    [[nodiscard]] Pieces_Manager *get_pieces() { return &pieces; }
+    [[nodiscard]] Pieces_Manager no_ptr_get_pieces() const { return pieces; }
 
     bool vertical_is_free(const int x, int y1, int y2)
     {
@@ -797,6 +807,8 @@ public:
     {
         Piece *piece = start.get_piece();
         start.unemploy();
+        if (not finish.is_empty())
+            finish.unemploy();
         finish.employ(piece);
     }
 
@@ -890,10 +902,10 @@ public:
             }
 
         for (int i = 0; i < 32; i++)
-            if (position->get_pieces().piece_number(i)->is_alive())
+            if (position->get_pieces()->piece_number(i)->is_alive())
             {
-                int x = position->get_pieces().piece_number(i)->get_x();
-                int y = position->get_pieces().piece_number(i)->get_y();
+                int x = position->get_pieces()->piece_number(i)->get_x();
+                int y = position->get_pieces()->piece_number(i)->get_y();
                 pieces[i / 16][i % 16].setPosition(coordinates(x, y));
             }
     }
@@ -931,13 +943,13 @@ public:
                             fields = {};
                             dots = {};
                             showing = true;
-                            position->check_moves(position->get_pieces().no_ptr_piece_number(num), fields);
+                            position->check_moves(position->get_pieces()->no_ptr_piece_number(num), fields);
                             for (auto &field: fields)
                             {
-                                sf::CircleShape shape(cell_side/8);
+                                sf::CircleShape shape(cell_side / 8);
                                 sf::Vector2f vec = coordinates(field[0], field[1]);
-                                vec.x +=3*cell_side/8;
-                                vec.y +=3*cell_side/8;
+                                vec.x += 3 * cell_side / 8;
+                                vec.y += 3 * cell_side / 8;
                                 shape.setPosition(vec);
                                 shape.setFillColor(table_c);
                                 dots.push_back(shape);
@@ -952,7 +964,7 @@ public:
                     sf::Vector2f n = pieces[num / 16][num % 16].getPosition();
                     std::vector<int> neu = which_cell(n.x, n.y);
                     std::vector<std::vector<int>> res;
-                    position->check_moves(position->get_pieces().no_ptr_piece_number(num), res);
+                    position->check_moves(position->get_pieces()->no_ptr_piece_number(num), res);
                     std::cout << "uFCKITnclicked" << std::endl;
 
                     if (res.empty())
@@ -968,8 +980,10 @@ public:
                                 std::vector<int> old = which_cell(start_x, start_y);
                                 position->move_piece(*position->get_cell(old[0], old[1]),
                                                      *position->get_cell(neu[0], neu[1]));
+
+                                position->get_pieces()->piece_number(num)->set_moved();
                                 showing = false;
-                                fields = {};
+                                fields = {}; //0x17800954ed0
                                 dots = {};
                                 break;
                             }
@@ -1104,7 +1118,7 @@ public:
 
     void print_piece_moves(int number)
     {
-        interface.print_piece_moves(position, *position.get_pieces().piece_number(number));
+        interface.print_piece_moves(position, *position.get_pieces()->piece_number(number));
     }
 };
 
@@ -1115,8 +1129,8 @@ int main()
     Game_Manager GM("default");
 
     GM.print_board();
-    GM.print_attacks();
-    GM.print_piece_moves(0); //Black -> White;KQRRBBNNpppppppp
+    //GM.print_attacks();
+    //GM.print_piece_moves(0); //Black -> White;KQRRBBNNpppppppp
 
     return 0;
 }
