@@ -813,6 +813,8 @@ private:
     bool chosen = false;
     int num;
     float start_x, start_y;
+    bool showing = false;
+    std::vector<std::vector<int>> fields = {};
 
     const float cell_side = 80, left_top_x = 40, left_top_y = 40;
     std::string pieces_style = "merida";
@@ -828,6 +830,7 @@ private:
     std::vector<std::vector<sf::Sprite>> pieces{{},
                                                 {}};
     std::vector<std::vector<sf::RectangleShape>> board;
+    std::vector<sf::CircleShape> dots = {};
     sf::RenderWindow window = sf::RenderWindow(sf::VideoMode(sc_width, sc_height), "Chess");
     sf::RectangleShape screen;
     sf::Clock clock;
@@ -924,6 +927,21 @@ public:
                             num = i;
                             start_x = pieces[i / 16][i % 16].getPosition().x;
                             start_y = pieces[i / 16][i % 16].getPosition().y;
+
+                            fields = {};
+                            dots = {};
+                            showing = true;
+                            position->check_moves(position->get_pieces().no_ptr_piece_number(num), fields);
+                            for (auto &field: fields)
+                            {
+                                sf::CircleShape shape(cell_side/8);
+                                sf::Vector2f vec = coordinates(field[0], field[1]);
+                                vec.x +=3*cell_side/8;
+                                vec.y +=3*cell_side/8;
+                                shape.setPosition(vec);
+                                shape.setFillColor(table_c);
+                                dots.push_back(shape);
+                            }
                         }
 
             if (event.type == sf::Event::MouseButtonReleased)
@@ -950,6 +968,9 @@ public:
                                 std::vector<int> old = which_cell(start_x, start_y);
                                 position->move_piece(*position->get_cell(old[0], old[1]),
                                                      *position->get_cell(neu[0], neu[1]));
+                                showing = false;
+                                fields = {};
+                                dots = {};
                                 break;
                             }
                             else
@@ -981,6 +1002,8 @@ public:
         for (int i = 0; i < 2; i++)
             for (int j = 0; j < 16; j++)
                 window.draw(pieces[i][j]);
+        for (auto &dot: dots)
+            window.draw(dot);
     }
 
     void print_board(Position &position)
