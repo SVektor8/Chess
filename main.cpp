@@ -793,15 +793,33 @@ public:
 class GUI final
 {
 private:
-    std::vector<std::vector<sf::RectangleShape>> board;
     const float cell_side = 80, left_top_x = 40, left_top_y = 40;
-public:
-    GUI()
-    {
+    std::string pieces_style = "merida";
+    float sc_width = 1080, sc_height = 720;
+    sf::Color table_c = sf::Color(0xC3, 0x58, 0x31),
+            white = sf::Color(0xE6, 0xD6, 0x90),
+            black = sf::Color(0xA5, 0x20, 0x19);
 
-        sf::RenderWindow window(sf::VideoMode(1080, 720), "Chess");
-        //sf::CircleShape shape(100.f);
-        // shape.setFillColor(sf::Color::Green);
+    Position *position = nullptr;
+    std::vector<std::vector<sf::Sprite>> pieces{{},
+                                                {}};
+    std::vector<std::vector<sf::RectangleShape>> board;
+    sf::RenderWindow window = sf::RenderWindow(sf::VideoMode(sc_width, sc_height), "Chess");
+    sf::RectangleShape screen;
+public:
+    GUI(Position *position) : position(position)
+    {
+        init_start();
+
+        update();
+
+    }
+
+    void init_start()
+    {
+        screen.setSize({sc_width, sc_height});
+        screen.setPosition(0, 0);
+        screen.setFillColor(table_c);
         for (int i = 0; i < 8; i++)
         {
             std::vector<sf::RectangleShape> tmp;
@@ -810,12 +828,48 @@ public:
                 sf::RectangleShape shape;
                 shape.setSize({cell_side, cell_side});
                 shape.setPosition(left_top_x + cell_side * i, left_top_y + cell_side * j);
-                shape.setFillColor((i + j) % 2 == 0 ? sf::Color::White : sf::Color::Black);
+                shape.setFillColor((i + j) % 2 == 0 ? white : black);
                 tmp.push_back(shape);
             }
             board.push_back(tmp);
         }
 
+        init_sprites();
+    }
+
+    void init_sprites()
+    {//FIXME path
+        std::string path = "C:/Users/Viktor/Documents/Chess/pics/Pieces/" + pieces_style + "/";
+        std::string letters[16] = {"K", "Q", "R", "R", "B", "B", "N", "N",
+                                   "P", "P", "P", "P", "P", "P", "P", "P"};
+
+        for (int i = 0; i < 2; i++)
+            for (int j = 0; j < 16; j++)
+            {
+                std::string color = (i == 0 ? "b" : "w");
+                sf::Image img;
+                img.loadFromFile(path + color + letters[j] + ".png");
+                sf::Texture txr;
+                txr.loadFromImage(img);
+                sf::Sprite spr;
+                spr.setTexture(txr);
+
+                pieces[i].push_back(spr);
+            }
+
+        for (int i = 0; i < 32; i++)
+            if (position->get_pieces().piece_number(i)->is_alive())
+            {
+                int x = position->get_pieces().piece_number(i)->get_x();
+                int y = position->get_pieces().piece_number(i)->get_y();
+                float X = left_top_x + (x - 1) * cell_side;
+                float Y = left_top_y + (8 - y) * cell_side;
+                pieces[i / 16][i % 16].setPosition(X, Y);
+            }
+    }
+
+    void update()
+    {
         while (window.isOpen())
         {
             sf::Event event;
@@ -825,14 +879,24 @@ public:
                     window.close();
             }
 
+
+
             window.clear();
-            for (int i = 0; i < 8; i++)
-                for (int j = 0; j < 8; j++)
-                    window.draw(board[i][j]);
+            draw();
             window.display();
 
         }
+    }
 
+    void draw()
+    {
+        window.draw(screen);
+        for (int i = 0; i < 8; i++)
+            for (int j = 0; j < 8; j++)
+                window.draw(board[i][j]);
+        for (int i = 0; i < 2; i++)
+            for (int j = 0; j < 16; j++)
+                window.draw(pieces[i][j]);
     }
 
     void print_board(Position &position)
@@ -899,10 +963,10 @@ class Game_Manager final
 {
 private:
     Position position;
-    GUI interface = GUI();
+    GUI interface;
 public:
 
-    Game_Manager(std::string const position_mode) : position(Position(position_mode)) {};
+    Game_Manager(std::string const position_mode) : position(Position(position_mode)), interface(&position) {};
 
     void print_board() { interface.print_board(position); }
 
