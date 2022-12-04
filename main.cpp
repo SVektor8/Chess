@@ -4,6 +4,7 @@
 #include <utility>
 #include <string>
 #include <vector>
+#include <cmath>
 
 //TODO pieces moving (probably cycle), showing move ability (where it can move)
 bool is_in_board(int x, int y)
@@ -503,7 +504,7 @@ public:
          * being copied separately. When changed, look at check_move_legality.*/
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
-                board[i][j] = src.get_cell(j + 1, i + 1);
+                board[i][j] = (src.no_ptr_get_cell(j + 1, i + 1));
         pieces = src.get_pieces();
     }
 
@@ -511,7 +512,7 @@ public:
     {
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
-                board[i][j] = src.get_cell(j + 1, i + 1);
+                board[i][j] = *src.get_cell(j + 1, i + 1);
         pieces = src.get_pieces();
     }
 
@@ -537,7 +538,12 @@ public:
         return *this;
     }
 
-    [[nodiscard]] Cell get_cell(int x, int y) const
+    [[nodiscard]] Cell * get_cell(int x, int y)
+    {
+        return &board[y - 1][x - 1];
+    }
+
+    [[nodiscard]] Cell no_ptr_get_cell(int x, int y) const
     {
         return board[y - 1][x - 1];
     }
@@ -608,7 +614,7 @@ public:
     {
         //TODO in case of problems check Position(Position const &src)
         bool result;
-        bool color = this->get_cell(x0, y0).get_piece()->get_color();
+        bool color = this->get_cell(x0, y0)->get_piece()->get_color();
 
         this->move_piece(board[y0 - 1][x0 - 1], board[y1 - 1][x1 - 1]);
         result = (this->check_check(color));
@@ -806,6 +812,7 @@ class GUI final
 private:
     bool chosen = false;
     int num;
+    float start_x, start_y;
 
     const float cell_side = 80, left_top_x = 40, left_top_y = 40;
     std::string pieces_style = "merida";
@@ -901,7 +908,6 @@ public:
         sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
         sf::Vector2f pos = window.mapPixelToCoords(pixelPos);
         float dX, dY;
-        int I = -1;
 
         sf::Event event;
         while (window.pollEvent(event))
@@ -914,33 +920,50 @@ public:
                         if (pieces[i / 16][i % 16].getGlobalBounds().contains(pos.x, pos.y))
                         {
                             std::cout << i << ' ' << "isClicked!\n";
-                            I = i;
                             dX = pos.x - pieces[i / 16][i % 16].getPosition().x;
                             dY = pos.y - pieces[i / 16][i % 16].getPosition().y;
                             chosen = true;
                             num = i;
+                            start_x = pieces[i / 16][i % 16].getPosition().x;
+                            start_y = pieces[i / 16][i % 16].getPosition().y;
                         }
-            if (I != -1)
-                std::cout<<position->get_pieces().piece_number(I)->is_chosen();
+
             if (event.type == sf::Event::MouseButtonReleased)
                 if (event.key.code == sf::Mouse::Left)
                 {
-                    std::cout << "isUNClicked!\n";
                     chosen = false;
+                    std::cout << "unclicked" << std::endl;
+                    sf::Vector2f n = pieces[num / 16][num % 16].getPosition();
+                    std::vector<int> neu = which_cell(n.x, n.y);
+                    std::vector<std::vector<int>> res;
+                    position->check_moves(position->get_pieces().no_ptr_piece_number(num), res);
+                    std::cout << "uFCKITnclicked" << std::endl;
+
+                    for (auto &re: res)
+                    {
+                        std::cout << "re  " << re[0] << ' ' << re[1] << std::endl;
+                        std::cout << "neu " << neu[0] << ' ' << neu[1] << std::endl;
+                        if (neu[0] == re[0] and neu[1] == re[1])
+                        {
+                            pieces[num / 16][num % 16].setPosition(pos.x - dX, pos.y - dY);
+                            std::vector<int> old = which_cell(start_x, start_y);
+                            position->move_piece(*position->get_cell(old[0], old[1]),
+                                                 *position->get_cell(neu[0], neu[1]));
+                            break;
+                        }
+                        else
+                        {
+                            pieces[num / 16][num % 16].setPosition(start_x, start_y);
+                            std::cout << 'l' << std::endl;
+                        }
+                    }
                 }
         }
 
-        if (I != -1)
-        std::cout<<position->get_pieces().piece_number(I)->is_chosen();
-
-        /*for (int i = 0; i < 32; i++)
-            if (position->get_pieces().piece_number(i)->is_chosen())
-            {
-                pieces[i / 16][i % 16].setPosition(pos.x - dX, pos.y - dY);
-                //std::cout << pos.x - dX << ' ' << pos.y - dY << std::endl;
-            }*/
         if (chosen)
-            pieces[num / 16][num%16].setPosition(pos.x - dX, pos.y - dY);
+        {
+            pieces[num / 16][num % 16].setPosition(pos.x - dX, pos.y - dY);
+        }
 
         window.clear();
         draw();
@@ -965,7 +988,7 @@ public:
         {
             for (int x = 1; x < 9; x++)
             {
-                Cell cell(position.get_cell(x, y));
+                Cell cell(*position.get_cell(x, y));
                 if (cell.is_empty())
                     std::cout << '*';
                 else
@@ -982,7 +1005,7 @@ public:
         {
             for (int x = 1; x < 9; x++)
             {
-                Cell cell(position.get_cell(x, y));
+                Cell cell(*position.get_cell(x, y));
                 if (cell.is_attacked_by_white())
                 {
                     if (cell.is_attacked_by_black())
@@ -1016,6 +1039,17 @@ public:
             std::cout << "NULL";
 
         std::cout << std::endl;
+    }
+
+    std::vector<int> which_cell(double x, double y)
+    {
+        std::vector<int> result = {};
+        x = x - left_top_x + cell_side / 2;
+        y = y - left_top_y + cell_side / 2;
+        result.push_back(floor(x / cell_side) + 1);
+        result.push_back(8 - floor(y / cell_side));
+
+        return result;
     }
 
 };
