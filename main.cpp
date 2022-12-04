@@ -801,8 +801,7 @@ private:
             black = sf::Color(0xA5, 0x20, 0x19);
 
     Position *position = nullptr;
-    std::vector<std::vector<sf::Texture>> textures{{},
-                                                {}};
+    std::vector<std::vector<sf::Texture>> textures = std::vector<std::vector<sf::Texture>>(2, std::vector<sf::Texture>(16, sf::Texture()));
     std::vector<std::vector<sf::Sprite>> pieces{{},
                                                 {}};
     std::vector<std::vector<sf::RectangleShape>> board;
@@ -845,241 +844,18 @@ public:
         std::string letters[16] = {"K", "Q", "R", "R", "B", "B", "N", "N",
                                    "P", "P", "P", "P", "P", "P", "P", "P"};
 
-        sf::Texture txr0;
-        txr0.loadFromFile(path + "bK" + ".png");
-        textures[0].push_back(txr0);
-        sf::Sprite spr0;
-        spr0.setTexture(textures[0][0]);
-        pieces[0].push_back(spr0);
+        for (int i = 0; i < 2; i++)
+            for (int j = 0; j < 16; j++)
+            {
+                std::string color = (i == 0 ? "b" : "w");
+                sf::Texture txr;
+                txr.loadFromFile(path + color + letters[j] + ".png");
+                textures[i][j] = txr;
+                sf::Sprite spr;
+                spr.setTexture(textures[i][j]);
 
-
-
-
-        sf::Texture txr1;
-        txr1.loadFromFile(path + "bQ" + ".png");
-        textures[0].push_back(txr1);
-        sf::Sprite spr1;
-        spr1.setTexture(textures[0][1]);
-        pieces[0].push_back(spr1);
-
-        spr0.setPosition(300, 300);
-        window.draw(spr0);
-        //window.display();
-        pieces[0][0].setPosition(400, 400);
-        window.draw(pieces[0][0]);
-        window.display();
-
-        sf::Texture txr2;
-        txr2.loadFromFile(path + "bR" + ".png");
-        textures[0].push_back(txr2);
-        sf::Sprite spr2;
-        spr2.setTexture(textures[0][2]);
-        pieces[0].push_back(spr2);
-
-        sf::Texture txr3;
-        txr3.loadFromFile(path + "bR" + ".png");
-        textures[0].push_back(txr3);
-        sf::Sprite spr3;
-        spr3.setTexture(textures[0][3]);
-        pieces[0].push_back(spr3);
-
-        sf::Texture txr4;
-        txr4.loadFromFile(path + "bB" + ".png");
-        textures[0].push_back(txr4);
-        sf::Sprite spr4;
-        spr4.setTexture(textures[0][4]);
-        pieces[0].push_back(spr4);
-
-        sf::Texture txr5;
-        txr5.loadFromFile(path + "bB" + ".png");
-        textures[0].push_back(txr5);
-        sf::Sprite spr5;
-        spr5.setTexture(textures[0][5]);
-        pieces[0].push_back(spr5);
-
-        sf::Texture txr6;
-        txr6.loadFromFile(path + "bN" + ".png");
-        textures[0].push_back(txr6);
-        sf::Sprite spr6;
-        spr6.setTexture(textures[0][6]);
-        pieces[0].push_back(spr6);
-
-        sf::Texture txr7;
-        txr7.loadFromFile(path + "bN" + ".png");
-        textures[0].push_back(txr7);
-        sf::Sprite spr7;
-        spr7.setTexture(textures[0][7]);
-        pieces[0].push_back(spr7);
-
-        sf::Texture txr8;
-        txr8.loadFromFile(path + "bP" + ".png");
-        textures[0].push_back(txr8);
-        sf::Sprite spr8;
-        spr8.setTexture(textures[0][8]);
-        pieces[0].push_back(spr8);
-
-        sf::Texture txr9;
-        txr9.loadFromFile(path + "bP" + ".png");
-        textures[0].push_back(txr9);
-        sf::Sprite spr9;
-        spr9.setTexture(textures[0][9]);
-        pieces[0].push_back(spr9);
-
-        sf::Texture txr10;
-        txr10.loadFromFile(path + "bP" + ".png");
-        textures[0].push_back(txr10);
-        sf::Sprite spr10;
-        spr10.setTexture(textures[0][10]);
-        pieces[0].push_back(spr10);
-
-        sf::Texture txr11;
-        txr11.loadFromFile(path + "bP" + ".png");
-        textures[0].push_back(txr11);
-        sf::Sprite spr11;
-        spr11.setTexture(textures[0][11]);
-        pieces[0].push_back(spr11);
-
-        sf::Texture txr12;
-        txr12.loadFromFile(path + "bP" + ".png");
-        textures[0].push_back(txr12);
-        sf::Sprite spr12;
-        spr12.setTexture(textures[0][12]);
-        pieces[0].push_back(spr12);
-
-        sf::Texture txr13;
-        txr13.loadFromFile(path + "bP" + ".png");
-        textures[0].push_back(txr13);
-        sf::Sprite spr13;
-        spr13.setTexture(textures[0][13]);
-        pieces[0].push_back(spr13);
-
-        sf::Texture txr14;
-        txr14.loadFromFile(path + "bP" + ".png");
-        textures[0].push_back(txr14);
-        sf::Sprite spr14;
-        spr14.setTexture(textures[0][14]);
-        pieces[0].push_back(spr14);
-
-        sf::Texture txr15;
-        txr15.loadFromFile(path + "bP" + ".png");
-        textures[0].push_back(txr15);
-        sf::Sprite spr15;
-        spr15.setTexture(textures[0][15]);
-        pieces[0].push_back(spr15);
-
-        sf::Texture txr16;
-        txr16.loadFromFile(path + "wK" + ".png");
-        textures[1].push_back(txr16);
-        sf::Sprite spr16;
-        spr16.setTexture(textures[1][0]);
-        pieces[1].push_back(spr16);
-
-        sf::Texture txr17;
-        txr17.loadFromFile(path + "wQ" + ".png");
-        textures[1].push_back(txr17);
-        sf::Sprite spr17;
-        spr17.setTexture(textures[1][1]);
-        pieces[1].push_back(spr17);
-
-        sf::Texture txr18;
-        txr18.loadFromFile(path + "wR" + ".png");
-        textures[1].push_back(txr18);
-        sf::Sprite spr18;
-        spr18.setTexture(textures[1][2]);
-        pieces[1].push_back(spr18);
-
-        sf::Texture txr19;
-        txr19.loadFromFile(path + "wR" + ".png");
-        textures[1].push_back(txr19);
-        sf::Sprite spr19;
-        spr19.setTexture(textures[1][3]);
-        pieces[1].push_back(spr19);
-
-        sf::Texture txr20;
-        txr20.loadFromFile(path + "wB" + ".png");
-        textures[1].push_back(txr20);
-        sf::Sprite spr20;
-        spr20.setTexture(textures[1][4]);
-        pieces[1].push_back(spr20);
-
-        sf::Texture txr21;
-        txr21.loadFromFile(path + "wB" + ".png");
-        textures[1].push_back(txr21);
-        sf::Sprite spr21;
-        spr21.setTexture(textures[1][5]);
-        pieces[1].push_back(spr21);
-
-        sf::Texture txr22;
-        txr22.loadFromFile(path + "wN" + ".png");
-        textures[1].push_back(txr22);
-        sf::Sprite spr22;
-        spr22.setTexture(textures[1][6]);
-        pieces[1].push_back(spr22);
-
-        sf::Texture txr23;
-        txr23.loadFromFile(path + "wN" + ".png");
-        textures[1].push_back(txr23);
-        sf::Sprite spr23;
-        spr23.setTexture(textures[1][7]);
-        pieces[1].push_back(spr23);
-
-        sf::Texture txr24;
-        txr24.loadFromFile(path + "wP" + ".png");
-        textures[1].push_back(txr24);
-        sf::Sprite spr24;
-        spr24.setTexture(textures[1][8]);
-        pieces[1].push_back(spr24);
-
-        sf::Texture txr25;
-        txr25.loadFromFile(path + "wP" + ".png");
-        textures[1].push_back(txr25);
-        sf::Sprite spr25;
-        spr25.setTexture(textures[1][9]);
-        pieces[1].push_back(spr25);
-
-        sf::Texture txr26;
-        txr26.loadFromFile(path + "wP" + ".png");
-        textures[1].push_back(txr26);
-        sf::Sprite spr26;
-        spr26.setTexture(textures[1][10]);
-        pieces[1].push_back(spr26);
-
-        sf::Texture txr27;
-        txr27.loadFromFile(path + "wP" + ".png");
-        textures[1].push_back(txr27);
-        sf::Sprite spr27;
-        spr27.setTexture(textures[1][11]);
-        pieces[1].push_back(spr27);
-
-        sf::Texture txr28;
-        txr28.loadFromFile(path + "wP" + ".png");
-        textures[1].push_back(txr28);
-        sf::Sprite spr28;
-        spr28.setTexture(textures[1][12]);
-        pieces[1].push_back(spr28);
-
-        sf::Texture txr29;
-        txr29.loadFromFile(path + "wP" + ".png");
-        textures[1].push_back(txr29);
-        sf::Sprite spr29;
-        spr29.setTexture(textures[1][13]);
-        pieces[1].push_back(spr29);
-
-        sf::Texture txr30;
-        txr30.loadFromFile(path + "wP" + ".png");
-        textures[1].push_back(txr30);
-        sf::Sprite spr30;
-        spr30.setTexture(textures[1][14]);
-        pieces[1].push_back(spr30);
-
-        sf::Texture txr31;
-        txr31.loadFromFile(path + "wP" + ".png");
-        textures[1].push_back(txr31);
-        sf::Sprite spr31;
-        spr31.setTexture(textures[1][15]);
-        pieces[1].push_back(spr31);
-
-
+                pieces[i].push_back(spr);
+            }
 
         for (int i = 0; i < 32; i++)
             if (position->get_pieces().piece_number(i)->is_alive())
@@ -1090,39 +866,28 @@ public:
                 float Y = left_top_y + (8 - y) * cell_side;
                 pieces[i / 16][i % 16].setPosition(X, Y);
             }
-
-
-        /*window.clear();
-        window.draw(screen);
-        for (int i = 0; i < 8; i++)
-            for (int j = 0; j < 8; j++)
-                window.draw(board[i][j]);
-        for (int i = 0; i < 2; i++)
-            for (int j = 0; j < 16; j++)
-                window.draw(pieces[i][j]);
-
-        spr0.setPosition(300, 300);
-        window.draw(spr0);
-        window.display();*/
     }
 
     void update()
     {
-
-
         while (window.isOpen())
         {
-            sf::Event event;
-            while (window.pollEvent(event))
-            {
-                if (event.type == sf::Event::Closed)
-                    window.close();
-            }
+            check_events();
 
+            window.clear();
+            draw();
+            window.display();
+        }
+    }
 
+    void check_events()
+    {
 
-
-
+        sf::Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+                window.close();
         }
     }
 
