@@ -891,9 +891,7 @@ public:
             {
                 int x = position->get_pieces().piece_number(i)->get_x();
                 int y = position->get_pieces().piece_number(i)->get_y();
-                float X = left_top_x + (x - 1) * cell_side;
-                float Y = left_top_y + (8 - y) * cell_side;
-                pieces[i / 16][i % 16].setPosition(X, Y);
+                pieces[i / 16][i % 16].setPosition(coordinates(x, y));
             }
     }
 
@@ -948,7 +946,7 @@ public:
                             std::cout << "neu " << neu[0] << ' ' << neu[1] << std::endl;
                             if (neu[0] == re[0] and neu[1] == re[1])
                             {
-                                pieces[num / 16][num % 16].setPosition(pos.x - dX, pos.y - dY);
+                                pieces[num / 16][num % 16].setPosition(coordinates(neu[0], neu[1]));
                                 std::vector<int> old = which_cell(start_x, start_y);
                                 position->move_piece(*position->get_cell(old[0], old[1]),
                                                      *position->get_cell(neu[0], neu[1]));
@@ -1053,6 +1051,13 @@ public:
         result.push_back(8 - floor(y / cell_side));
 
         return result;
+    }
+
+    sf::Vector2f coordinates(int x, int y)
+    {
+        float X = left_top_x + (x - 1) * cell_side;
+        float Y = left_top_y + (8 - y) * cell_side;
+        return sf::Vector2f(X, Y);
     }
 
 };
