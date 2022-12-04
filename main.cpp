@@ -17,6 +17,7 @@ protected:
     int x = 0, y = 0;
     bool alive = false, defended = false;
     bool color = true; //true = white, false = black
+    bool chosen = false;
     char type = 'Z';
 
 public: //TODO ASK does it stay public and the upper code protected?
@@ -36,6 +37,12 @@ public: //TODO ASK does it stay public and the upper code protected?
 
     [[nodiscard]] bool is_defended() const { return defended; }
 
+    [[nodiscard]] bool is_chosen() const { return chosen; }
+
+    void choose() { chosen = true; }
+
+    void un_choose() { chosen = false; }
+
     void move(int n_x, int n_y)
     {
         x = n_x;
@@ -54,6 +61,7 @@ public: //TODO ASK does it stay public and the upper code protected?
         alive = src.is_alive();
         color = src.get_color();
         defended = src.is_defended();
+        chosen = src.is_chosen();
     }
 
     Piece(Piece &&src) noexcept
@@ -64,6 +72,7 @@ public: //TODO ASK does it stay public and the upper code protected?
         alive = src.is_alive();
         color = src.get_color();
         defended = src.is_defended();
+        chosen = src.is_chosen();
     }
 
     Piece &operator=(Piece const &src)
@@ -77,6 +86,7 @@ public: //TODO ASK does it stay public and the upper code protected?
         std::swap(this->alive, tmp.alive);
         std::swap(this->color, tmp.color);
         std::swap(this->defended, tmp.defended);
+        std::swap(this->chosen, tmp.chosen);
 
         return *this;
     }
@@ -92,6 +102,7 @@ public: //TODO ASK does it stay public and the upper code protected?
         std::swap(this->alive, tmp.alive);
         std::swap(this->color, tmp.color);
         std::swap(this->defended, tmp.defended);
+        std::swap(this->chosen, tmp.chosen);
 
         return *this;
     }
@@ -793,6 +804,9 @@ public:
 class GUI final
 {
 private:
+    bool chosen = false;
+    int num;
+
     const float cell_side = 80, left_top_x = 40, left_top_y = 40;
     std::string pieces_style = "merida";
     float sc_width = 1080, sc_height = 720;
@@ -801,18 +815,26 @@ private:
             black = sf::Color(0xA5, 0x20, 0x19);
 
     Position *position = nullptr;
-    std::vector<std::vector<sf::Texture>> textures = std::vector<std::vector<sf::Texture>>(2, std::vector<sf::Texture>(16, sf::Texture()));
+    std::vector<std::vector<sf::Texture>> textures = std::vector<std::vector<sf::Texture>>(2,
+                                                                                           std::vector<sf::Texture>(16,
+                                                                                                                    sf::Texture()));
     std::vector<std::vector<sf::Sprite>> pieces{{},
                                                 {}};
     std::vector<std::vector<sf::RectangleShape>> board;
     sf::RenderWindow window = sf::RenderWindow(sf::VideoMode(sc_width, sc_height), "Chess");
     sf::RectangleShape screen;
+    sf::Clock clock;
 public:
     GUI(Position *position) : position(position)
     {
         init_start();
 
-        update();
+        float currentFrame = 0;
+
+        while (window.isOpen())
+        {
+            update();
+        }
 
     }
 
@@ -870,25 +892,60 @@ public:
 
     void update()
     {
-        while (window.isOpen())
-        {
-            check_events();
+        float time = clock.getElapsedTime().asMicroseconds();
 
-            window.clear();
-            draw();
-            window.display();
-        }
-    }
+        clock.restart();
+        time = time / 800;
 
-    void check_events()
-    {
+
+        sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
+        sf::Vector2f pos = window.mapPixelToCoords(pixelPos);
+        float dX, dY;
+        int I = -1;
 
         sf::Event event;
         while (window.pollEvent(event))
         {
             if (event.type == sf::Event::Closed)
                 window.close();
+            if (event.type == sf::Event::MouseButtonPressed)
+                if (event.key.code == sf::Mouse::Left)
+                    for (int i = 0; i < 32; i++)
+                        if (pieces[i / 16][i % 16].getGlobalBounds().contains(pos.x, pos.y))
+                        {
+                            std::cout << i << ' ' << "isClicked!\n";
+                            I = i;
+                            dX = pos.x - pieces[i / 16][i % 16].getPosition().x;
+                            dY = pos.y - pieces[i / 16][i % 16].getPosition().y;
+                            chosen = true;
+                            num = i;
+                        }
+            if (I != -1)
+                std::cout<<position->get_pieces().piece_number(I)->is_chosen();
+            if (event.type == sf::Event::MouseButtonReleased)
+                if (event.key.code == sf::Mouse::Left)
+                {
+                    std::cout << "isUNClicked!\n";
+                    chosen = false;
+                }
         }
+
+        if (I != -1)
+        std::cout<<position->get_pieces().piece_number(I)->is_chosen();
+
+        /*for (int i = 0; i < 32; i++)
+            if (position->get_pieces().piece_number(i)->is_chosen())
+            {
+                pieces[i / 16][i % 16].setPosition(pos.x - dX, pos.y - dY);
+                //std::cout << pos.x - dX << ' ' << pos.y - dY << std::endl;
+            }*/
+        if (chosen)
+            pieces[num / 16][num%16].setPosition(pos.x - dX, pos.y - dY);
+
+        window.clear();
+        draw();
+        window.display();
+
     }
 
     void draw()
@@ -960,6 +1017,7 @@ public:
 
         std::cout << std::endl;
     }
+
 };
 
 class Game_Manager final
