@@ -1,3 +1,4 @@
+#include <SFML/Graphics.hpp>
 #include <iostream>
 #include <algorithm>
 #include <utility>
@@ -791,7 +792,49 @@ public:
 
 class GUI final
 {
+private:
+    std::vector<std::vector<sf::RectangleShape>> board;
+    const float cell_side = 80, left_top_x = 40, left_top_y = 40;
 public:
+    GUI()
+    {
+
+        sf::RenderWindow window(sf::VideoMode(1080, 720), "Chess");
+        //sf::CircleShape shape(100.f);
+        // shape.setFillColor(sf::Color::Green);
+        for (int i = 0; i < 8; i++)
+        {
+            std::vector<sf::RectangleShape> tmp;
+            for (int j = 0; j < 8; j++)
+            {
+                sf::RectangleShape shape;
+                shape.setSize({cell_side, cell_side});
+                shape.setPosition(left_top_x + cell_side * i, left_top_y + cell_side * j);
+                shape.setFillColor((i + j) % 2 == 0 ? sf::Color::White : sf::Color::Black);
+                tmp.push_back(shape);
+            }
+            board.push_back(tmp);
+        }
+
+        while (window.isOpen())
+        {
+            sf::Event event;
+            while (window.pollEvent(event))
+            {
+                if (event.type == sf::Event::Closed)
+                    window.close();
+            }
+
+            window.clear();
+            for (int i = 0; i < 8; i++)
+                for (int j = 0; j < 8; j++)
+                    window.draw(board[i][j]);
+            window.display();
+
+        }
+
+    }
+
     void print_board(Position &position)
     {
         for (int y = 8; y > 0; y--)
