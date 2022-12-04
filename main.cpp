@@ -180,6 +180,35 @@ public:
     }
 };
 
+class Visual_Piece final
+{
+private:
+    sf::Sprite spr;
+    sf::Texture txr;
+    Piece *piece;
+public:
+    Visual_Piece(Piece *piece, std::string path,
+                 float left_top_x, float left_top_y, float cell_side) :
+            piece(piece)
+    {
+        txr = sf::Texture();
+        spr = sf::Sprite();
+        txr.loadFromFile(path);
+        spr.setTexture(txr);
+        if (piece->is_alive())
+        {
+            float X = left_top_x + (piece->get_x() - 1) * cell_side;
+            float Y = left_top_y + (8 - piece->get_y()) * cell_side;
+            spr.setPosition(X, Y);
+        }
+    };
+
+    sf::Sprite *get_sprite()
+    {
+        return &spr;
+    }
+};
+
 class Pieces_Manager final
 {
 private:
@@ -800,10 +829,9 @@ private:
             white = sf::Color(0xE6, 0xD6, 0x90),
             black = sf::Color(0xA5, 0x20, 0x19);
 
-    Position *position = nullptr;
-    std::vector<std::vector<sf::Texture>> textures = std::vector<std::vector<sf::Texture>>(2, std::vector<sf::Texture>(16, sf::Texture()));
-    std::vector<std::vector<sf::Sprite>> pieces{{},
-                                                {}};
+    Position *position;
+    std::vector<std::vector<Visual_Piece>> pieces{{},
+                                                  {}};
     std::vector<std::vector<sf::RectangleShape>> board;
     sf::RenderWindow window = sf::RenderWindow(sf::VideoMode(sc_width, sc_height), "Chess");
     sf::RectangleShape screen;
@@ -848,23 +876,10 @@ public:
             for (int j = 0; j < 16; j++)
             {
                 std::string color = (i == 0 ? "b" : "w");
-                sf::Texture txr;
-                txr.loadFromFile(path + color + letters[j] + ".png");
-                textures[i][j] = txr;
-                sf::Sprite spr;
-                spr.setTexture(textures[i][j]);
-
-                pieces[i].push_back(spr);
-            }
-
-        for (int i = 0; i < 32; i++)
-            if (position->get_pieces().piece_number(i)->is_alive())
-            {
-                int x = position->get_pieces().piece_number(i)->get_x();
-                int y = position->get_pieces().piece_number(i)->get_y();
-                float X = left_top_x + (x - 1) * cell_side;
-                float Y = left_top_y + (8 - y) * cell_side;
-                pieces[i / 16][i % 16].setPosition(X, Y);
+                std::string sub_path = path + color + letters[j] + ".png";
+                pieces[i].push_back(Visual_Piece(
+                        position->get_pieces().piece_number(i * 16 + j), sub_path,
+                        left_top_x, left_top_y, cell_side));
             }
     }
 
@@ -899,7 +914,7 @@ public:
                 window.draw(board[i][j]);
         for (int i = 0; i < 2; i++)
             for (int j = 0; j < 16; j++)
-                window.draw(pieces[i][j]);
+                window.draw(*pieces[i][j].get_sprite());
     }
 
     void print_board(Position &position)
