@@ -802,7 +802,7 @@ private:
 
     Position *position = nullptr;
     std::vector<std::vector<sf::Texture>> textures{{},
-                                                   {}};
+                                                {}};
     std::vector<std::vector<sf::Sprite>> pieces{{},
                                                 {}};
     std::vector<std::vector<sf::RectangleShape>> board;
@@ -844,6 +844,7 @@ public:
         std::string path = "C:/Users/Viktor/Documents/Chess/pics/Pieces/" + pieces_style + "/";
         std::string letters[16] = {"K", "Q", "R", "R", "B", "B", "N", "N",
                                    "P", "P", "P", "P", "P", "P", "P", "P"};
+
         sf::Texture txr0;
         txr0.loadFromFile(path + "bK" + ".png");
         textures[0].push_back(txr0);
@@ -851,12 +852,22 @@ public:
         spr0.setTexture(textures[0][0]);
         pieces[0].push_back(spr0);
 
+
+
+
         sf::Texture txr1;
         txr1.loadFromFile(path + "bQ" + ".png");
         textures[0].push_back(txr1);
         sf::Sprite spr1;
         spr1.setTexture(textures[0][1]);
         pieces[0].push_back(spr1);
+
+        spr0.setPosition(300, 300);
+        window.draw(spr0);
+        //window.display();
+        pieces[0][0].setPosition(400, 400);
+        window.draw(pieces[0][0]);
+        window.display();
 
         sf::Texture txr2;
         txr2.loadFromFile(path + "bR" + ".png");
@@ -1068,6 +1079,8 @@ public:
         spr31.setTexture(textures[1][15]);
         pieces[1].push_back(spr31);
 
+
+
         for (int i = 0; i < 32; i++)
             if (position->get_pieces().piece_number(i)->is_alive())
             {
@@ -1078,20 +1091,25 @@ public:
                 pieces[i / 16][i % 16].setPosition(X, Y);
             }
 
-        window.clear();
-        //draw();
+
+        /*window.clear();
+        window.draw(screen);
+        for (int i = 0; i < 8; i++)
+            for (int j = 0; j < 8; j++)
+                window.draw(board[i][j]);
         for (int i = 0; i < 2; i++)
             for (int j = 0; j < 16; j++)
                 window.draw(pieces[i][j]);
-        window.display();
+
+        spr0.setPosition(300, 300);
+        window.draw(spr0);
+        window.display();*/
     }
 
     void update()
     {
 
-        //window.clear();
-        //draw();
-        //window.display();
+
         while (window.isOpen())
         {
             sf::Event event;
@@ -1100,6 +1118,9 @@ public:
                 if (event.type == sf::Event::Closed)
                     window.close();
             }
+
+
+
 
 
         }
