@@ -511,18 +511,39 @@ public:
          * board of the new Position object will have pointers on the
          * pieces of the old position objects, as the Pieces object is
          * being copied separately. When changed, look at check_move_legality.*/
+
+        pieces = src.no_ptr_get_pieces();
+
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
+            {
                 board[i][j] = (src.no_ptr_get_cell(j + 1, i + 1));
-        pieces = src.no_ptr_get_pieces();
+                for (int k = 0; k < 32; k++)
+                {
+                    if (pieces.piece_number(k)->get_x() == j + 1 and
+                        pieces.piece_number(k)->get_y() == i + 1 and
+                        pieces.piece_number(k)->is_alive())
+                        board[i][j].employ(pieces.piece_number(k));
+                }
+            }
     }
 
     Position(Position &&src) noexcept
     {
+        pieces = src.no_ptr_get_pieces();
+
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
-                board[i][j] = *src.get_cell(j + 1, i + 1);
-        pieces = *src.get_pieces();
+            {
+                board[i][j] = (src.no_ptr_get_cell(j + 1, i + 1));
+                for (int k = 0; k < 32; k++)
+                {
+                    if (pieces.piece_number(k)->get_x() == j + 1 and
+                        pieces.piece_number(k)->get_y() == i + 1 and
+                        pieces.piece_number(k)->is_alive())
+                        board[i][j].employ(pieces.piece_number(k));
+                }
+            }
     }
 
     Position &operator=(Position const &src)
@@ -558,6 +579,7 @@ public:
     }
 
     [[nodiscard]] Pieces_Manager *get_pieces() { return &pieces; }
+
     [[nodiscard]] Pieces_Manager no_ptr_get_pieces() const { return pieces; }
 
     bool vertical_is_free(const int x, int y1, int y2)
@@ -625,10 +647,10 @@ public:
         //TODO in case of problems check Position(Position const &src)
         bool result;
         bool color = this->get_cell(x0, y0)->get_piece()->get_color();
+        Position posi = *this;
 
-        this->move_piece(board[y0 - 1][x0 - 1], board[y1 - 1][x1 - 1]);
-        result = (this->check_check(color));
-        this->move_piece(board[y1 - 1][x1 - 1], board[y0 - 1][x0 - 1]);
+        posi.move_piece(*posi.get_cell(x0, y0), *posi.get_cell(x1, y1));
+        result = (posi.check_check(color));
 
         return result;
     }
@@ -791,7 +813,7 @@ public:
 
     void add_moves(std::vector<std::vector<int>> &vector, int p_x, int p_y, int x, int y)
     {
-        if (is_in_board(x, y) &&
+        if (is_in_board(x, y) && //not(board[p_y - 1][p_x - 1].is_empty()) &&
             (board[y - 1][x - 1].is_empty() ||
              board[y - 1][x - 1].can_be_taken(board[p_y - 1][p_x - 1].get_piece()->get_color())) &&
             not(check_move_legality(p_x, p_y, x, y)))
@@ -808,7 +830,10 @@ public:
         Piece *piece = start.get_piece();
         start.unemploy();
         if (not finish.is_empty())
+        {
             finish.unemploy();
+            std::cout << "SHitti bug" << std::endl;
+        }
         finish.employ(piece);
     }
 
@@ -1015,7 +1040,8 @@ public:
                 window.draw(board[i][j]);
         for (int i = 0; i < 2; i++)
             for (int j = 0; j < 16; j++)
-                window.draw(pieces[i][j]);
+                if (position->get_pieces()->piece_number(i * 16 + j)->is_alive())
+                    window.draw(pieces[i][j]);
         for (auto &dot: dots)
             window.draw(dot);
     }
