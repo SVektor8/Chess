@@ -538,7 +538,7 @@ public:
         return *this;
     }
 
-    [[nodiscard]] Cell * get_cell(int x, int y)
+    [[nodiscard]] Cell *get_cell(int x, int y)
     {
         return &board[y - 1][x - 1];
     }
@@ -939,24 +939,27 @@ public:
                     position->check_moves(position->get_pieces().no_ptr_piece_number(num), res);
                     std::cout << "uFCKITnclicked" << std::endl;
 
-                    for (auto &re: res)
-                    {
-                        std::cout << "re  " << re[0] << ' ' << re[1] << std::endl;
-                        std::cout << "neu " << neu[0] << ' ' << neu[1] << std::endl;
-                        if (neu[0] == re[0] and neu[1] == re[1])
+                    if (res.empty())
+                        pieces[num / 16][num % 16].setPosition(start_x, start_y);
+                    else
+                        for (auto &re: res)
                         {
-                            pieces[num / 16][num % 16].setPosition(pos.x - dX, pos.y - dY);
-                            std::vector<int> old = which_cell(start_x, start_y);
-                            position->move_piece(*position->get_cell(old[0], old[1]),
-                                                 *position->get_cell(neu[0], neu[1]));
-                            break;
+                            std::cout << "re  " << re[0] << ' ' << re[1] << std::endl;
+                            std::cout << "neu " << neu[0] << ' ' << neu[1] << std::endl;
+                            if (neu[0] == re[0] and neu[1] == re[1])
+                            {
+                                pieces[num / 16][num % 16].setPosition(pos.x - dX, pos.y - dY);
+                                std::vector<int> old = which_cell(start_x, start_y);
+                                position->move_piece(*position->get_cell(old[0], old[1]),
+                                                     *position->get_cell(neu[0], neu[1]));
+                                break;
+                            }
+                            else
+                            {
+                                pieces[num / 16][num % 16].setPosition(start_x, start_y);
+                                std::cout << 'l' << std::endl;
+                            }
                         }
-                        else
-                        {
-                            pieces[num / 16][num % 16].setPosition(start_x, start_y);
-                            std::cout << 'l' << std::endl;
-                        }
-                    }
                 }
         }
 
