@@ -801,6 +801,8 @@ private:
             black = sf::Color(0xA5, 0x20, 0x19);
 
     Position *position = nullptr;
+    std::vector<std::vector<sf::Texture>> textures{{},
+                                                   {}};
     std::vector<std::vector<sf::Sprite>> pieces{{},
                                                 {}};
     std::vector<std::vector<sf::RectangleShape>> board;
@@ -839,6 +841,14 @@ public:
 
     void init_sprites()
     {//FIXME path
+
+        window.clear();
+
+        window.draw(screen);
+        for (int i = 0; i < 8; i++)
+            for (int j = 0; j < 8; j++)
+                window.draw(board[i][j]);
+
         std::string path = "C:/Users/Viktor/Documents/Chess/pics/Pieces/" + pieces_style + "/";
         std::string letters[16] = {"K", "Q", "R", "R", "B", "B", "N", "N",
                                    "P", "P", "P", "P", "P", "P", "P", "P"};
@@ -847,15 +857,28 @@ public:
             for (int j = 0; j < 16; j++)
             {
                 std::string color = (i == 0 ? "b" : "w");
-                sf::Image img;
-                img.loadFromFile(path + color + letters[j] + ".png");
+                //sf::Image img;
+                //img.loadFromFile(path + color + letters[j] + ".png");
                 sf::Texture txr;
-                txr.loadFromImage(img);
+                //txr.loadFromImage(img);
+                txr.loadFromFile(path + color + letters[j] + ".png");
+                textures[i].push_back(txr);
                 sf::Sprite spr;
-                spr.setTexture(txr);
+                spr.setTexture(textures[i][j]);
 
                 pieces[i].push_back(spr);
+                pieces[i] = spr;
+
+                int x = position->get_pieces().piece_number(i*16 + j)->get_x();
+                int y = position->get_pieces().piece_number(i * 16 + j)->get_y();
+                float X = left_top_x + (x - 1) * cell_side;
+                float Y = left_top_y + (8 - y) * cell_side;
+                pieces[i][j].setPosition(X, Y);
+                //window.draw(pieces[i][j]);
             }
+        for (int i = 0; i < 2; i++)
+            for (int j = 0; j < 16; j++)
+                window.draw(pieces[i][j]);
 
         for (int i = 0; i < 32; i++)
             if (position->get_pieces().piece_number(i)->is_alive())
@@ -866,10 +889,16 @@ public:
                 float Y = left_top_y + (8 - y) * cell_side;
                 pieces[i / 16][i % 16].setPosition(X, Y);
             }
+
+        window.display();
     }
 
     void update()
     {
+
+        //window.clear();
+        //draw();
+        //window.display();
         while (window.isOpen())
         {
             sf::Event event;
@@ -879,11 +908,6 @@ public:
                     window.close();
             }
 
-
-
-            window.clear();
-            draw();
-            window.display();
 
         }
     }
@@ -986,7 +1010,7 @@ int main()
 {
     std::cout << "Hello, Chess World!" << std::endl;
 
-    Game_Manager GM("Q_custom");
+    Game_Manager GM("default");
 
     GM.print_board();
     GM.print_attacks();
