@@ -813,28 +813,33 @@ public:
 
     void add_moves(std::vector<std::vector<int>> &vector, int p_x, int p_y, int x, int y)
     {
-        if (is_in_board(x, y) && //not(board[p_y - 1][p_x - 1].is_empty()) &&
-            (board[y - 1][x - 1].is_empty() ||
-             board[y - 1][x - 1].can_be_taken(board[p_y - 1][p_x - 1].get_piece()->get_color())) &&
-            not(check_move_legality(p_x, p_y, x, y)))
-        {
-            std::vector<int> tmp(2);
-            tmp[0] = x;
-            tmp[1] = y;
-            vector.push_back(tmp);
-        }
+        if (turn == board[p_y - 1][p_x - 1].get_piece()->get_color())
+            if (is_in_board(x, y) && //not(board[p_y - 1][p_x - 1].is_empty()) &&
+                (board[y - 1][x - 1].is_empty() ||
+                 board[y - 1][x - 1].can_be_taken(board[p_y - 1][p_x - 1].get_piece()->get_color())) &&
+                not(check_move_legality(p_x, p_y, x, y)))
+            {
+                std::vector<int> tmp(2);
+                tmp[0] = x;
+                tmp[1] = y;
+                vector.push_back(tmp);
+            }
     }
 
     void move_piece(Cell &start, Cell &finish)
     {
-        Piece *piece = start.get_piece();
-        start.unemploy();
-        if (not finish.is_empty())
+        if (&start != &finish)
         {
-            finish.unemploy();
-            std::cout << "SHitti bug" << std::endl;
+            Piece *piece = start.get_piece();
+            start.unemploy();
+            if (not finish.is_empty())
+            {
+                finish.unemploy();
+                std::cout << "SHitti bug" << std::endl;
+            }
+            finish.employ(piece);
+            turn = not turn;
         }
-        finish.employ(piece);
     }
 
     void q_custom(Piece *piece, int &i, int &j, int p_x, int p_y)
@@ -1042,6 +1047,13 @@ public:
             for (int j = 0; j < 16; j++)
                 if (position->get_pieces()->piece_number(i * 16 + j)->is_alive())
                     window.draw(pieces[i][j]);
+                else
+                {
+                    pieces[i][j].setPosition(2000, 2000);
+                    /* Here was a bug that sprite could not be moved
+                     * since it's piece ate the other, whose sprite
+                     * was higher*/
+                }
         for (auto &dot: dots)
             window.draw(dot);
     }
