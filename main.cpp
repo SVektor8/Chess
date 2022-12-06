@@ -7,7 +7,7 @@
 #include <cmath>
 
 //TODO pieces moving (probably cycle), showing move ability (where it can move)
-//TODO clean code; add working with errors
+//TODO clean code; add working with errors; add winner screen and restarting
 bool is_in_board(int x, int y)
 {
     return (x > 0 and x < 9 and y > 0 and y < 9);
@@ -17,7 +17,7 @@ class Piece
 {
 protected:
     int x = 0, y = 0;
-    bool alive = false, defended = false, moved = false;
+    bool alive = false, moved = false;
     bool color = true; //true = white, false = black
     bool chosen = false;
     char type = 'Z';
@@ -37,13 +37,7 @@ public: //TODO ASK does it stay public and the upper code protected?
 
     [[nodiscard]] bool is_alive() const { return alive; }
 
-    [[nodiscard]] bool is_defended() const { return defended; }
-
     [[nodiscard]] bool is_chosen() const { return chosen; }
-
-    void choose() { chosen = true; }
-
-    void un_choose() { chosen = false; }
 
     void move(int n_x, int n_y)
     {
@@ -62,7 +56,6 @@ public: //TODO ASK does it stay public and the upper code protected?
         type = src.get_type();
         alive = src.is_alive();
         color = src.get_color();
-        defended = src.is_defended();
         chosen = src.is_chosen();
         moved = src.has_moved();
     }
@@ -74,7 +67,6 @@ public: //TODO ASK does it stay public and the upper code protected?
         type = src.get_type();
         alive = src.is_alive();
         color = src.get_color();
-        defended = src.is_defended();
         chosen = src.is_chosen();
         moved = src.has_moved();
     }
@@ -89,7 +81,6 @@ public: //TODO ASK does it stay public and the upper code protected?
         std::swap(this->type, tmp.type);
         std::swap(this->alive, tmp.alive);
         std::swap(this->color, tmp.color);
-        std::swap(this->defended, tmp.defended);
         std::swap(this->chosen, tmp.chosen);
         std::swap(this->moved, tmp.moved);
 
@@ -106,14 +97,11 @@ public: //TODO ASK does it stay public and the upper code protected?
         std::swap(this->type, tmp.type);
         std::swap(this->alive, tmp.alive);
         std::swap(this->color, tmp.color);
-        std::swap(this->defended, tmp.defended);
         std::swap(this->chosen, tmp.chosen);
         std::swap(this->moved, tmp.moved);
 
         return *this;
     }
-
-    virtual void move_routine() {};
 
     [[nodiscard]] virtual bool has_moved() const { return moved; }
 
@@ -140,11 +128,6 @@ class Queen final : public Piece
 {
 public:
     explicit Queen(bool color) : Piece(color) { type = 'Q'; }
-
-    void move_routine() override
-    {
-        defended = false;
-    }
 };
 
 class Rook final : public Piece
@@ -155,33 +138,18 @@ public:
     explicit Rook(bool color) : Piece(color), moved(false) { type = 'R'; }
 
     [[nodiscard]] bool has_moved() const override { return moved; }
-
-    void move_routine() override
-    {
-        defended = false;
-    }
 };
 
 class Bishop final : public Piece
 {
 public:
     explicit Bishop(bool color) : Piece(color) { type = 'B'; }
-
-    void move_routine() override
-    {
-        defended = false;
-    }
 };
 
 class Knight final : public Piece
 {
 public:
     explicit Knight(bool color) : Piece(color) { type = 'N'; }
-
-    void move_routine() override
-    {
-        defended = false;
-    }
 };
 
 class Pawn final : public Piece
@@ -195,10 +163,6 @@ public:
 
     void set_moved() override { moved = true; }
 
-    void move_routine() override
-    {
-        defended = false;
-    }
 };
 
 class Pieces_Manager final
@@ -337,12 +301,11 @@ class Cell final
 private:
     int x, y;
     bool empty = true, black_attacked = false, white_attacked = false;
-    bool color;
     Piece *piece;
 public:
-    Cell() : x(1), y(1), color(false), piece(nullptr) {};
+    Cell() : x(1), y(1), piece(nullptr) {};
 
-    Cell(int x, int y) : x(x), y(y), color((x + y) % 2), piece(nullptr) {};
+    Cell(int x, int y) : x(x), y(y), piece(nullptr) {};
 
     //TODO write destructor
     ~Cell() = default;
@@ -353,9 +316,8 @@ public:
         y = src.get_y();
         empty = src.is_empty();
         piece = src.get_piece();
-        color = src.get_color();
-        white_attacked = src.is_attacked_by_white();
-        black_attacked = src.is_attacked_by_black();
+        white_attacked = src.is_attacked_by(true);
+        black_attacked = src.is_attacked_by(false);
     }
 
     Cell(Cell &&src) noexcept
@@ -364,9 +326,8 @@ public:
         y = src.get_y();
         empty = src.is_empty();
         piece = src.get_piece();
-        color = src.get_color();
-        white_attacked = src.is_attacked_by_white();
-        black_attacked = src.is_attacked_by_black();
+        white_attacked = src.is_attacked_by(true);
+        black_attacked = src.is_attacked_by(false);
     }
 
     Cell &operator=(Cell const &src)
@@ -378,7 +339,6 @@ public:
         std::swap(this->y, tmp.y);
         std::swap(this->empty, tmp.empty);
         std::swap(this->piece, tmp.piece);
-        std::swap(this->color, tmp.color);
         std::swap(this->white_attacked, tmp.white_attacked);
         std::swap(this->black_attacked, tmp.black_attacked);
 
@@ -399,29 +359,23 @@ public:
 
     [[nodiscard]] int get_y() const { return y; }
 
-    [[nodiscard]] int get_color() const { return color; }
-
     [[nodiscard]] Piece *get_piece() const { return piece; }
 
     [[nodiscard]] bool is_empty() const { return empty; }
 
-    [[nodiscard]] bool is_attacked_by_white() const { return white_attacked; }
-
-    [[nodiscard]] bool is_attacked_by_black() const { return black_attacked; }
-
-    [[nodiscard]] bool can_be_taken(bool piece_color) const { return piece->get_color() != piece_color; }
-
-    [[nodiscard]] bool is_attacked_by(bool piece_color) const
+    [[nodiscard]] bool is_attacked_by(bool color) const
     {
-        if (piece_color)
+        if (color)
             return white_attacked;
         else
             return black_attacked;
     }
 
-    void set_attacked(bool p_color)
+    [[nodiscard]] bool can_be_taken(bool color) const { return piece->get_color() != color; }
+
+    void set_attacked(bool color)
     {
-        if (p_color)
+        if (color)
             white_attacked = true;
         else
             black_attacked = true;
@@ -638,9 +592,9 @@ public:
         for (int x = x1; x <= x2; x++)
             if (board[y - 1][x - 1].is_attacked_by(not color))
             {
-                for (int i = 0; i < 8; i++)
-                    for (int j = 0; j < 8; j++)
-                        board[i][j].set_unattacked();
+                for (auto &i: board)
+                    for (auto &j: i)
+                        j.set_unattacked();
                 return false;
             }
         return true;
@@ -653,7 +607,7 @@ public:
 
         for (int k = 0; k < 32; k++)
             if (pieces.piece_number(k)->is_alive())
-                check_attack(*pieces.piece_number(k), board[y - 1][x - 1]);
+                set_attack(*pieces.piece_number(k), board[y - 1][x - 1]);
 
         if (board[y - 1][x - 1].is_attacked_by(not color))
             return true;
@@ -661,9 +615,20 @@ public:
             return false;
     }
 
+    bool check_castling(Piece const &king, Piece &rook)
+    {
+        if (not king.has_moved() and not rook.has_moved())
+            if (king.get_y() == rook.get_y() and rook.get_color() == king.get_color())
+                if (horizontal_is_free(king.get_y(), king.get_x(), rook.get_x()))
+                    if (horizontal_is_safe(king.get_y(), king.get_x(),
+                                           king.get_x() - rook.get_x() > 0 ? king.get_x() - 2 : king.get_x() + 2,
+                                           king.get_color()))
+                        return true;
+        return false;
+    }
+
     bool check_move_legality(int x0, int y0, int x1, int y1)
     {
-        //TODO in case of problems check Position(Position const &src)
         bool result;
         bool color = this->get_cell(x0, y0)->get_piece()->get_color();
         Position posi = *this;
@@ -674,7 +639,13 @@ public:
         return result;
     }
 
-    void check_attack(Piece const &piece, Cell &cell)
+    void set_attack(Piece const &piece, Cell &cell)
+    {
+        if (check_attack(piece, cell))
+            cell.set_attacked(piece.get_color());
+    }
+
+    bool check_attack(Piece const &piece, Cell const &cell)
     {
         int c_x = cell.get_x(), c_y = cell.get_y();
         int p_x = piece.get_x(), p_y = piece.get_y();
@@ -687,24 +658,24 @@ public:
                 if (color)
                 {
                     if (c_y - p_y == 1 and abs(c_x - p_x) == 1) // white pawn
-                        cell.set_attacked(color);
+                        return true;
                 }
                 else
                 {
                     if (c_y - p_y == -1 and abs(c_x - p_x) == 1) // black pawn
-                        cell.set_attacked(color);
+                        return true;
                 }
             }
             else if (piece.get_type() == 'K')
             {
                 if (abs(c_y - p_y) <= 1 and abs(c_x - p_x) <= 1)
-                    cell.set_attacked(color);
+                    return true;
             }
             else if (piece.get_type() == 'R')
             {
                 if (c_x == p_x and vertical_is_free(c_x, c_y, p_y)
                                    or c_y == p_y and horizontal_is_free(c_y, c_x, p_x))
-                    cell.set_attacked(color);
+                    return true;
 
             }
             else if (piece.get_type() == 'N')
@@ -712,25 +683,27 @@ public:
                 if (c_y != p_y and c_x != p_x
                     and (abs(c_y - p_y) == 2 and abs(c_x - p_x) == 1 or
                                                  abs(c_x - p_x) == 2 and abs(c_y - p_y) == 1))
-                    cell.set_attacked(color);
+                    return true;
             }
             else if (piece.get_type() == 'B')
             {
                 if (abs(c_y - p_y) == abs(c_x - p_x) and
                     diagonal_is_free(c_x, c_y, p_x, p_y))
-                    cell.set_attacked(color);
+                    return true;
             }
             else if (piece.get_type() == 'Q')
             {
                 if (c_x == p_x and vertical_is_free(c_x, c_y, p_y)
                                    or c_y == p_y and horizontal_is_free(c_y, c_x, p_x))
-                    cell.set_attacked(color);
+                    return true;
 
                 if (abs(c_y - p_y) == abs(c_x - p_x) and
                     diagonal_is_free(c_x, c_y, p_x, p_y))
-                    cell.set_attacked(color);
+                    return true;
             }
         }
+
+        return false;
     }
 
     void check_attack_all()
@@ -741,18 +714,18 @@ public:
                 j.set_unattacked();
                 for (int k = 0; k < 32; k++)
                     if (pieces.piece_number(k)->is_alive())
-                        check_attack(*pieces.piece_number(k), j);
+                        set_attack(*pieces.piece_number(k), j);
             }
     }
 
     void check_moves(Piece const &piece, std::vector<std::vector<int>> &result)
-    {//TODO add checks, bounds, move en passant, taking other pieces, etc. ...
+    {//TODO move en passant
         int p_x = piece.get_x();
         int p_y = piece.get_y();
         int color = piece.get_color();
         char type = piece.get_type();
         std::vector<std::vector<int>> vars;
-        //TODO add castling
+
         if (not piece.is_alive())
             return;
         if (type == 'p')
@@ -805,21 +778,12 @@ public:
         {
             for (int x = 1; x < 9; x++)
                 for (int y = 1; y < 9; y++)
-                {//TODO rewrite both this and check_attack
-                    bool black = board[y - 1][x - 1].is_attacked_by_black();
-                    bool white = board[y - 1][x - 1].is_attacked_by_white();
-                    board[y - 1][x - 1].set_unattacked();
-                    check_attack(piece, board[y - 1][x - 1]);
-                    if (board[y - 1][x - 1].is_attacked_by(color))
+                {
+                    if (check_attack(piece, board[y - 1][x - 1]))
                     {
                         std::vector tmp{x, y};
                         vars.push_back(tmp);
                     }
-                    board[y - 1][x - 1].set_unattacked();
-                    if (black)
-                        board[y - 1][x - 1].set_attacked(false);
-                    if (white)
-                        board[y - 1][x - 1].set_attacked(true);
                 }
 
             for (auto &var: vars)
@@ -877,17 +841,6 @@ public:
             board[i][j].employ(piece);
     }
 
-    bool check_castling(Piece const &king, Piece &rook)
-    {
-        if (not king.has_moved() and not rook.has_moved())
-            if (king.get_y() == rook.get_y() and rook.get_color() == king.get_color())
-                if (horizontal_is_free(king.get_y(), king.get_x(), rook.get_x()))
-                    if (horizontal_is_safe(king.get_y(), king.get_x(),
-                                           king.get_x() - rook.get_x() > 0 ? king.get_x() - 2 : king.get_x() + 2,
-                                           king.get_color()))
-                        return true;
-        return false;
-    }
 };
 
 class GUI final
@@ -918,7 +871,7 @@ private:
     sf::RectangleShape screen;
     sf::Clock clock;
 public:
-    GUI(Position *position) : position(position)
+    explicit GUI(Position *position) : position(position)
     {
         init_start();
 
@@ -1056,17 +1009,14 @@ public:
                                         bool side = neu[0] - piece->get_x() > 0;
                                         bool color = piece->get_color();
                                         Piece *rook = position->get_pieces()->rook(color, side ? 2 : 1);
-                                        if (true)
-                                        {
-                                            pieces[color][side ? 3 : 2].setPosition(
-                                                    coordinates(neu[0] + (side ? -1 : +1), neu[1]));
-                                            std::vector<int> old = {rook->get_x(), rook->get_y()};
-                                            position->move_piece(*position->get_cell(old[0], old[1]),
-                                                                 *position->get_cell(neu[0] + (side ? -1 : +1),
-                                                                                     neu[1]), true);
 
-                                            rook->set_moved();
-                                        }
+                                        pieces[color][side ? 3 : 2].setPosition(
+                                                coordinates(neu[0] + (side ? -1 : +1), neu[1]));
+                                        std::vector<int> old = {rook->get_x(), rook->get_y()};
+                                        position->move_piece(*position->get_cell(old[0], old[1]),
+                                                             *position->get_cell(neu[0] + (side ? -1 : +1),
+                                                                                 neu[1]), true);
+                                        rook->set_moved();
                                     }
                                     pieces[num / 16][num % 16].setPosition(coordinates(neu[0], neu[1]));
                                     std::vector<int> old = which_cell(start_x, start_y);
@@ -1145,14 +1095,14 @@ public:
             for (int x = 1; x < 9; x++)
             {
                 Cell cell(*position.get_cell(x, y));
-                if (cell.is_attacked_by_white())
+                if (cell.is_attacked_by(true))
                 {
-                    if (cell.is_attacked_by_black())
+                    if (cell.is_attacked_by(false))
                         std::cout << 'b';
                     else
                         std::cout << 'W';
                 }
-                else if (cell.is_attacked_by_black())
+                else if (cell.is_attacked_by(true))
                     std::cout << 'B';
                 else
                     std::cout << 'n';
@@ -1180,7 +1130,7 @@ public:
         std::cout << std::endl;
     }
 
-    std::vector<int> which_cell(double x, double y)
+    std::vector<int> which_cell(double x, double y) const
     {
         std::vector<int> result = {};
         x = x - left_top_x + cell_side / 2;
@@ -1191,11 +1141,11 @@ public:
         return result;
     }
 
-    sf::Vector2f coordinates(int x, int y)
+    sf::Vector2f coordinates(int x, int y) const
     {
         float X = left_top_x + (x - 1) * cell_side;
         float Y = left_top_y + (8 - y) * cell_side;
-        return sf::Vector2f(X, Y);
+        return {X, Y};
     }
 
 };
@@ -1207,7 +1157,8 @@ private:
     GUI interface;
 public:
 
-    Game_Manager(std::string const position_mode) : position(Position(position_mode)), interface(&position) {};
+    explicit Game_Manager(std::string const &position_mode) : position(Position(position_mode)),
+                                                              interface(&position) {};
 
     void print_board() { interface.print_board(position); }
 
