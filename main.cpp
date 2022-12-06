@@ -754,7 +754,7 @@ public:
                 }
                 for (int i = -1; i < 2; i += 2)
                 {
-                    int x1 = p_x + 1, y1 = p_y + 1;
+                    int x1 = p_x + i, y1 = p_y + 1;
                     if ((not board[y1 - 1][x1 - 1].is_empty()) &&
                         board[y1 - 1][x1 - 1].can_be_taken(color))
                         add_moves(result, p_x, p_y, x1, y1);
@@ -989,40 +989,44 @@ public:
             if (event.type == sf::Event::MouseButtonReleased)
                 if (event.key.code == sf::Mouse::Left)
                 {
-                    chosen = false;
-                    std::cout << "unclicked" << std::endl;
-                    sf::Vector2f n = pieces[num / 16][num % 16].getPosition();
-                    std::vector<int> neu = which_cell(n.x, n.y);
-                    std::vector<std::vector<int>> res;
-                    position->check_moves(position->get_pieces()->no_ptr_piece_number(num), res);
-                    std::cout << "uFCKITnclicked" << std::endl;
+                    if (chosen)
+                    {
+                        chosen = false;
 
-                    if (res.empty())
-                        pieces[num / 16][num % 16].setPosition(start_x, start_y);
-                    else
-                        for (auto &re: res)
-                        {
-                            std::cout << "re  " << re[0] << ' ' << re[1] << std::endl;
-                            std::cout << "neu " << neu[0] << ' ' << neu[1] << std::endl;
-                            if (neu[0] == re[0] and neu[1] == re[1])
-                            {
-                                pieces[num / 16][num % 16].setPosition(coordinates(neu[0], neu[1]));
-                                std::vector<int> old = which_cell(start_x, start_y);
-                                position->move_piece(*position->get_cell(old[0], old[1]),
-                                                     *position->get_cell(neu[0], neu[1]));
+                        std::cout << "unclicked" << std::endl;
+                        sf::Vector2f n = pieces[num / 16][num % 16].getPosition();
+                        std::vector<int> neu = which_cell(n.x, n.y);
+                        std::vector<std::vector<int>> res;
+                        position->check_moves(position->get_pieces()->no_ptr_piece_number(num), res);
+                        std::cout << "uFCKITnclicked" << std::endl;
 
-                                position->get_pieces()->piece_number(num)->set_moved();
-                                showing = false;
-                                fields = {}; //0x17800954ed0
-                                dots = {};
-                                break;
-                            }
-                            else
+                        if (res.empty())
+                            pieces[num / 16][num % 16].setPosition(start_x, start_y);
+                        else
+                            for (auto &re: res)
                             {
-                                pieces[num / 16][num % 16].setPosition(start_x, start_y);
-                                std::cout << 'l' << std::endl;
+                                std::cout << "re  " << re[0] << ' ' << re[1] << std::endl;
+                                std::cout << "neu " << neu[0] << ' ' << neu[1] << std::endl;
+                                if (neu[0] == re[0] and neu[1] == re[1])
+                                {
+                                    pieces[num / 16][num % 16].setPosition(coordinates(neu[0], neu[1]));
+                                    std::vector<int> old = which_cell(start_x, start_y);
+                                    position->move_piece(*position->get_cell(old[0], old[1]),
+                                                         *position->get_cell(neu[0], neu[1]));
+
+                                    position->get_pieces()->piece_number(num)->set_moved();
+                                    showing = false;
+                                    fields = {}; //0x17800954ed0
+                                    dots = {};
+                                    break;
+                                }
+                                else
+                                {
+                                    pieces[num / 16][num % 16].setPosition(start_x, start_y);
+                                    std::cout << 'l' << std::endl;
+                                }
                             }
-                        }
+                    }
                 }
         }
 
