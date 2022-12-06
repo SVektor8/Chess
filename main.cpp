@@ -913,8 +913,8 @@ public:
     }
 
     void init_sprites()
-    {//FIXME path
-        std::string path = "C:/Users/Viktor/Documents/Chess/pics/Pieces/" + pieces_style + "/";
+    {
+        std::string path = "../pics/Pieces/" + pieces_style + "/";
         std::string letters[16] = {"K", "Q", "R", "R", "B", "B", "N", "N",
                                    "P", "P", "P", "P", "P", "P", "P", "P"};
 
