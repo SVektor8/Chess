@@ -7,6 +7,7 @@
 #include <cmath>
 
 //TODO pieces moving (probably cycle), showing move ability (where it can move)
+//TODO clean code; add working with errors
 bool is_in_board(int x, int y)
 {
     return (x > 0 and x < 9 and y > 0 and y < 9);
@@ -627,6 +628,24 @@ public:
         }
     }
 
+    bool horizontal_is_safe(const int y, int x1, int x2, bool color)
+    {
+        if (x1 > x2)
+            std::swap(x1, x2);
+
+        check_attack_all();
+
+        for (int x = x1; x <= x2; x++)
+            if (board[y - 1][x - 1].is_attacked_by(not color))
+            {
+                for (int i = 0; i < 8; i++)
+                    for (int j = 0; j < 8; j++)
+                        board[i][j].set_unattacked();
+                return false;
+            }
+        return true;
+    }
+
     bool check_check(bool color)
     {
         int x = pieces.king(color)->get_x();
@@ -649,7 +668,7 @@ public:
         bool color = this->get_cell(x0, y0)->get_piece()->get_color();
         Position posi = *this;
 
-        posi.move_piece(*posi.get_cell(x0, y0), *posi.get_cell(x1, y1));
+        posi.move_piece(*posi.get_cell(x0, y0), *posi.get_cell(x1, y1), false);
         result = (posi.check_check(color));
 
         return result;
@@ -808,7 +827,15 @@ public:
                 add_moves(result, p_x, p_y, var[0], var[1]);
             }
         }
-        //Fixme try set for different pieces different vars and then for all try it in cycle
+        if (type == 'K')
+        {
+            color = piece.get_color();
+
+            if (check_castling(piece, *pieces.rook(color, 1)))
+                add_moves(result, p_x, p_y, p_x - 2, p_y);
+            if (check_castling(piece, *pieces.rook(color, 2)))
+                add_moves(result, p_x, p_y, p_x + 2, p_y);
+        }
     }
 
     void add_moves(std::vector<std::vector<int>> &vector, int p_x, int p_y, int x, int y)
@@ -826,7 +853,7 @@ public:
             }
     }
 
-    void move_piece(Cell &start, Cell &finish)
+    void move_piece(Cell &start, Cell &finish, bool castle)
     {
         if (&start != &finish)
         {
@@ -838,7 +865,9 @@ public:
                 std::cout << "SHitti bug" << std::endl;
             }
             finish.employ(piece);
-            turn = not turn;
+
+            if (not castle)
+                turn = not turn;
         }
     }
 
@@ -846,6 +875,18 @@ public:
     {
         if (i == p_y - 1 and j == p_x - 1)
             board[i][j].employ(piece);
+    }
+
+    bool check_castling(Piece const &king, Piece &rook)
+    {
+        if (not king.has_moved() and not rook.has_moved())
+            if (king.get_y() == rook.get_y() and rook.get_color() == king.get_color())
+                if (horizontal_is_free(king.get_y(), king.get_x(), rook.get_x()))
+                    if (horizontal_is_safe(king.get_y(), king.get_x(),
+                                           king.get_x() - rook.get_x() > 0 ? king.get_x() - 2 : king.get_x() + 2,
+                                           king.get_color()))
+                        return true;
+        return false;
     }
 };
 
@@ -1009,12 +1050,30 @@ public:
                                 std::cout << "neu " << neu[0] << ' ' << neu[1] << std::endl;
                                 if (neu[0] == re[0] and neu[1] == re[1])
                                 {
+                                    Piece *piece = position->get_pieces()->piece_number(num);
+                                    if (abs(neu[0] - piece->get_x()) == 2 and piece->get_type() == 'K')
+                                    {
+                                        bool side = neu[0] - piece->get_x() > 0;
+                                        bool color = piece->get_color();
+                                        Piece *rook = position->get_pieces()->rook(color, side ? 2 : 1);
+                                        if (true)
+                                        {
+                                            pieces[color][side ? 3 : 2].setPosition(
+                                                    coordinates(neu[0] + (side ? -1 : +1), neu[1]));
+                                            std::vector<int> old = {rook->get_x(), rook->get_y()};
+                                            position->move_piece(*position->get_cell(old[0], old[1]),
+                                                                 *position->get_cell(neu[0] + (side ? -1 : +1),
+                                                                                     neu[1]), true);
+
+                                            rook->set_moved();
+                                        }
+                                    }
                                     pieces[num / 16][num % 16].setPosition(coordinates(neu[0], neu[1]));
                                     std::vector<int> old = which_cell(start_x, start_y);
                                     position->move_piece(*position->get_cell(old[0], old[1]),
-                                                         *position->get_cell(neu[0], neu[1]));
+                                                         *position->get_cell(neu[0], neu[1]), false);
 
-                                    position->get_pieces()->piece_number(num)->set_moved();
+                                    piece->set_moved();
                                     showing = false;
                                     fields = {}; //0x17800954ed0
                                     dots = {};
