@@ -296,6 +296,8 @@ public:
     [[nodiscard]] Piece *piece_number(int which) { return &pieces[which / size][which % size]; }
 
     [[nodiscard]] Piece no_ptr_piece_number(int which) const { return pieces[which / size][which % size]; }
+
+    [[nodiscard]] unsigned long long get_size() const { return size; }
 };
 
 class Cell final
@@ -539,6 +541,8 @@ public:
 
     [[nodiscard]] Pieces_Manager no_ptr_get_pieces() const { return pieces; }
 
+    [[nodiscard]] bool get_turn() const { return turn; }
+
     bool vertical_is_free(const int x, int y1, int y2)
     {
         if (y1 > y2)
@@ -617,6 +621,22 @@ public:
             return false;
     }
 
+    bool check_kinda_mate(bool color)
+    {
+        for (int i = 0; i < pieces.get_size(); i++)
+        {
+            std::vector<std::vector<int>> res = {};
+            check_moves(*pieces.piece_number(color ? i + 16 : i), res);
+
+            if (not res.empty())
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     bool check_castling(Piece const &king, Piece &rook)
     {
         if (not king.has_moved() and not rook.has_moved())
@@ -639,12 +659,6 @@ public:
         result = (posi.check_check(color));
 
         return result;
-    }
-
-    void set_attack(Piece const &piece, Cell &cell)
-    {
-        if (check_attack(piece, cell))
-            cell.set_attacked(piece.get_color());
     }
 
     bool check_attack(Piece const &piece, Cell const &cell)
@@ -828,13 +842,19 @@ public:
             if (not finish.is_empty())
             {
                 finish.unemploy();
-                std::cout << "SHitti bug" << std::endl;
+                //std::cout << "SHitti bug" << std::endl;
             }
             finish.employ(piece);
 
             if (not castle)
                 turn = not turn;
         }
+    }
+
+    void set_attack(Piece const &piece, Cell &cell)
+    {
+        if (check_attack(piece, cell))
+            cell.set_attacked(piece.get_color());
     }
 
     void q_custom(Piece *piece, int &i, int &j, int p_x, int p_y)
@@ -944,6 +964,14 @@ public:
         time = time / 800;
 
 
+        if (position->check_kinda_mate(position->get_turn()))
+        {
+            if (position->check_check(position->get_turn()))
+                std::cout << "MATE!!! " << position->get_turn() << std::endl;
+            else
+                std::cout << "STALEMATE!!! " << position->get_turn() << std::endl;
+        }
+
         sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
         sf::Vector2f pos = window.mapPixelToCoords(pixelPos);
         float dX, dY;
@@ -958,7 +986,7 @@ public:
                     for (int i = 0; i < 32; i++)
                         if (pieces[i / 16][i % 16].getGlobalBounds().contains(pos.x, pos.y))
                         {
-                            std::cout << i << ' ' << "isClicked!\n";
+                            //std::cout << i << ' ' << "isClicked!\n";
                             dX = pos.x - pieces[i / 16][i % 16].getPosition().x;
                             dY = pos.y - pieces[i / 16][i % 16].getPosition().y;
                             chosen = true;
@@ -989,20 +1017,20 @@ public:
                     {
                         chosen = false;
 
-                        std::cout << "unclicked" << std::endl;
+                        //std::cout << "unclicked" << std::endl;
                         sf::Vector2f n = pieces[num / 16][num % 16].getPosition();
                         std::vector<int> neu = which_cell(n.x, n.y);
                         std::vector<std::vector<int>> res;
                         position->check_moves(position->get_pieces()->no_ptr_piece_number(num), res);
-                        std::cout << "uFCKITnclicked" << std::endl;
+                        //std::cout << "uFCKITnclicked" << std::endl;
 
                         if (res.empty())
                             pieces[num / 16][num % 16].setPosition(start_x, start_y);
                         else
                             for (auto &re: res)
                             {
-                                std::cout << "re  " << re[0] << ' ' << re[1] << std::endl;
-                                std::cout << "neu " << neu[0] << ' ' << neu[1] << std::endl;
+                                //std::cout << "re  " << re[0] << ' ' << re[1] << std::endl;
+                                //std::cout << "neu " << neu[0] << ' ' << neu[1] << std::endl;
                                 if (neu[0] == re[0] and neu[1] == re[1])
                                 {
                                     Piece *piece = position->get_pieces()->piece_number(num);
@@ -1034,7 +1062,7 @@ public:
                                 else
                                 {
                                     pieces[num / 16][num % 16].setPosition(start_x, start_y);
-                                    std::cout << 'l' << std::endl;
+                                    //std::cout << 'l' << std::endl;
                                 }
                             }
                     }
