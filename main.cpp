@@ -8,6 +8,8 @@
 
 //TODO pieces moving (probably cycle), showing move ability (where it can move)
 //TODO clean code; add working with errors; add winner screen and restarting
+//TODO add choosing extended mode; add making pawns queens
+
 bool is_in_board(int x, int y)
 {
     return (x > 0 and x < 9 and y > 0 and y < 9);
@@ -843,7 +845,7 @@ public:
 
 };
 
-class GUI final
+class Game final
 {
 private:
     bool chosen = false;
@@ -871,7 +873,7 @@ private:
     sf::RectangleShape screen;
     sf::Clock clock;
 public:
-    explicit GUI(Position *position) : position(position)
+    explicit Game(Position *position) : position(position)
     {
         init_start();
 
@@ -1150,14 +1152,14 @@ public:
 
 };
 
-class Game_Manager final
+class Test_Manager final
 {
 private:
     Position position;
-    GUI interface;
+    Game interface;
 public:
 
-    explicit Game_Manager(std::string const &position_mode) : position(Position(position_mode)),
+    explicit Test_Manager(std::string const &position_mode) : position(Position(position_mode)),
                                                               interface(&position) {};
 
     void print_board() { interface.print_board(position); }
@@ -1174,13 +1176,23 @@ public:
     }
 };
 
+void create(std::string const mode)
+{
+    Position position = Position(mode);
+    Game game = Game(&position);
+}
+
 int main()
 {
     std::cout << "Hello, Chess World!" << std::endl;
 
-    Game_Manager GM("default");
+    //Test_Manager GM("default");
+    //Position posi = Position("default");
+    //Game game(&posi);
 
-    GM.print_board();
+    create("default");
+
+    //GM.print_board();
     //GM.print_attacks();
     //GM.print_piece_moves(0); //Black -> White;KQRRBBNNpppppppp
 
