@@ -306,6 +306,7 @@ private:
     int x, y;
     bool empty = true, black_attacked = false, white_attacked = false;
     Piece *piece;
+    Piece *french_piece;
 public:
     Cell() : x(1), y(1), piece(nullptr) {};
 
@@ -320,6 +321,7 @@ public:
         y = src.get_y();
         empty = src.is_empty();
         piece = src.get_piece();
+        french_piece = src.get_french_piece();
         white_attacked = src.is_attacked_by(true);
         black_attacked = src.is_attacked_by(false);
     }
@@ -330,6 +332,7 @@ public:
         y = src.get_y();
         empty = src.is_empty();
         piece = src.get_piece();
+        french_piece = src.get_french_piece();
         white_attacked = src.is_attacked_by(true);
         black_attacked = src.is_attacked_by(false);
     }
@@ -343,6 +346,7 @@ public:
         std::swap(this->y, tmp.y);
         std::swap(this->empty, tmp.empty);
         std::swap(this->piece, tmp.piece);
+        std::swap(this->french_piece, tmp.french_piece);
         std::swap(this->white_attacked, tmp.white_attacked);
         std::swap(this->black_attacked, tmp.black_attacked);
 
@@ -364,6 +368,15 @@ public:
     [[nodiscard]] int get_y() const { return y; }
 
     [[nodiscard]] Piece *get_piece() const { return piece; }
+
+    [[nodiscard]] Piece *get_french_piece() const { return french_piece; }
+
+    void set_french_piece(Piece *f_piece)
+    {
+        french_piece = f_piece;
+    }
+
+    void no_french() { french_piece = nullptr; }
 
     [[nodiscard]] bool is_empty() const { return empty; }
 
